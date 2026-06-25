@@ -1,0 +1,1776 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SYSTEM.ROOT // DIY WALLPAPER MODDING ENGINE</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --bg-amoled: #050508;
+            --bg-cyber: #0d0e15;
+            --bg-card: #141622;
+            --neon-cyan: #00f3ff;
+            --neon-pink: #ff0055;
+            --neon-yellow: #ffee00;
+            --text-main: #e2e8f0;
+            --text-muted: #64748b;
+            --border-cyber: #1e293b;
+            --font-cyber: 'Orbitron', sans-serif;
+            --font-sub: 'Rajdhani', sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        body {
+            background-color: var(--bg-amoled);
+            color: var(--text-main);
+            font-family: var(--font-sub);
+            font-size: 16px;
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Khung giả lập Smartphone cao cấp */
+        #phone-wrapper {
+            width: 100%;
+            max-width: 420px;
+            height: 100%;
+            max-height: 860px;
+            background-color: var(--bg-cyber);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            border: 2px solid #222538;
+            box-shadow: 0 0 40px rgba(0, 243, 255, 0.15);
+        }
+
+        @media(min-width: 430px) {
+            #phone-wrapper {
+                border-radius: 16px;
+                height: 92vh;
+            }
+        }
+
+        /* --- UI UTILITIES (Chamfered Tech Design) --- */
+        .cyber-panel {
+            background: var(--bg-card);
+            border: 1px solid var(--border-cyber);
+            clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px));
+        }
+
+        .cyber-btn {
+            background: transparent;
+            color: var(--text-main);
+            border: 1px solid var(--neon-cyan);
+            font-family: var(--font-cyber);
+            font-size: 12px;
+            font-weight: bold;
+            padding: 10px 16px;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            clip-path: polygon(8px 0%, 100% 0%, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0% 100%, 0% 8px);
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .cyber-btn.primary {
+            background: var(--neon-cyan);
+            color: #000;
+        }
+
+        .cyber-btn.pink {
+            border-color: var(--neon-pink);
+            color: var(--neon-pink);
+        }
+        .cyber-btn.pink.filled {
+            background: var(--neon-pink);
+            color: #fff;
+        }
+
+        .cyber-btn:active {
+            transform: scale(0.95);
+            opacity: 0.8;
+        }
+
+        /* Toggles công nghệ (Cyber-switches) góc cạnh */
+        .cyber-switch {
+            width: 55px;
+            height: 24px;
+            background: #1e293b;
+            position: relative;
+            cursor: pointer;
+            clip-path: polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px);
+            border: 1px solid var(--border-cyber);
+            transition: all 0.3s;
+        }
+        .cyber-switch::before {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 16px;
+            left: 4px;
+            top: 3px;
+            background: var(--text-muted);
+            clip-path: polygon(4px 0, 100% 0, 100% calc(100% - 4px), calc(100% - 4px) 100%, 0 100%, 0 4px);
+            transition: all 0.2s ease;
+        }
+        .cyber-switch.active {
+            background: rgba(0, 243, 255, 0.2);
+            border-color: var(--neon-cyan);
+        }
+        .cyber-switch.active::before {
+            left: 29px;
+            background: var(--neon-cyan);
+            box-shadow: 0 0 8px var(--neon-cyan);
+        }
+
+        /* --- APP SCREENS --- */
+        .app-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: none;
+            flex-direction: column;
+            z-index: 10;
+            background: var(--bg-cyber);
+        }
+
+        .app-screen.active {
+            display: flex;
+        }
+
+        /* SYSTEM SCAN LOADING PARAMETERS */
+        .cyber-scan-loader-box {
+            width: 180px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+        .cyber-scan-track {
+            width: 100%;
+            height: 6px;
+            background: rgba(22, 25, 37, 0.6);
+            border: 1px solid var(--border-cyber);
+            position: relative;
+            overflow: hidden;
+            clip-path: polygon(4px 0, 100% 0, 100% calc(100% - 4px), calc(100% - 4px) 100%, 0 100%, 0 4px);
+        }
+        .cyber-scan-fluid-bar {
+            position: absolute;
+            top: 0;
+            left: -50%;
+            width: 40%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, var(--neon-cyan), transparent);
+            box-shadow: 0 0 10px var(--neon-cyan);
+            animation: matrix-fluid-scan 1.4s infinite linear;
+        }
+        .cyber-scan-bitstream {
+            font-family: var(--font-cyber);
+            font-size: 9px;
+            color: var(--neon-cyan);
+            opacity: 0.8;
+            letter-spacing: 1.5px;
+            height: 12px;
+        }
+
+        /* Screen 1: Loading */
+        #screen-loading {
+            z-index: 100;
+            background: var(--bg-amoled);
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+        }
+        .glitch-title {
+            font-family: var(--font-cyber);
+            font-size: 26px;
+            font-weight: 900;
+            color: #fff;
+            letter-spacing: 3px;
+            text-shadow: 2px 0 var(--neon-cyan), -2px 0 var(--neon-pink);
+            animation: glitch 1.5s infinite alternate;
+        }
+
+        /* Giao diện chung Header/Nav */
+        .cyber-header {
+            height: 65px;
+            min-height: 65px;
+            border-bottom: 1px solid var(--border-cyber);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 16px;
+            background: rgba(13, 14, 21, 0.85);
+            backdrop-filter: blur(10px);
+            font-family: var(--font-cyber);
+            z-index: 20;
+        }
+        .cyber-header h2 {
+            font-size: 15px;
+            letter-spacing: 1px;
+            color: #fff;
+        }
+        .header-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-main);
+            font-size: 18px;
+            cursor: pointer;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: color 0.2s;
+        }
+        .header-btn:hover {
+            color: var(--neon-cyan);
+        }
+
+        /* Screen 2: System Root (Home) */
+        .category-scroll {
+            display: flex;
+            gap: 10px;
+            padding: 12px 16px;
+            overflow-x: auto;
+            white-space: nowrap;
+            scroll-behavior: smooth;
+        }
+        .category-scroll::-webkit-scrollbar { display: none; }
+        
+        .category-tab {
+            font-family: var(--font-cyber);
+            font-size: 11px;
+            font-weight: bold;
+            padding: 6px 14px;
+            border: 1px solid var(--border-cyber);
+            color: var(--text-muted);
+            background: transparent;
+            cursor: pointer;
+            clip-path: polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px);
+        }
+        .category-tab.active {
+            color: #000;
+            background: var(--neon-yellow);
+            border-color: var(--neon-yellow);
+            box-shadow: 0 0 10px rgba(255, 238, 0, 0.3);
+        }
+
+        .filter-container {
+            padding: 0 16px 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .filter-btn {
+            font-family: var(--font-sub);
+            font-size: 13px;
+            background: #161925;
+            border: 1px solid var(--border-cyber);
+            color: var(--text-main);
+            padding: 4px 12px;
+            cursor: pointer;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .filter-btn.active {
+            border-color: var(--neon-cyan);
+            color: var(--neon-cyan);
+            background: rgba(0, 243, 255, 0.05);
+        }
+
+        .grid-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px 16px;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 14px;
+        }
+        .grid-content::-webkit-scrollbar { width: 4px; }
+        .grid-content::-webkit-scrollbar-thumb { background: var(--border-cyber); }
+
+        .theme-card {
+            position: relative;
+            height: 220px;
+            overflow: hidden;
+            cursor: pointer;
+        }
+        .theme-card img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.4s ease;
+        }
+        /* .theme-card:hover img {
+            transform: scale(1.05);
+        } */
+        .card-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(0deg, rgba(5,5,8,0.9) 0%, rgba(5,5,8,0) 60%);
+            display: flex;
+            align-items: flex-end;
+            padding: 10px;
+        }
+        .card-title {
+            font-family: var(--font-cyber);
+            font-size: 11px;
+            color: #fff;
+            letter-spacing: 0.5px;
+        }
+        .fav-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: rgba(5, 5, 8, 0.6);
+            border: 1px solid rgba(255,255,255,0.1);
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            cursor: pointer;
+            z-index: 5;
+            transition: all 0.2s;
+        }
+        .fav-btn.active {
+            color: var(--neon-pink);
+            border-color: var(--neon-pink);
+        }
+        .card-badge {
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            font-family: var(--font-cyber);
+            font-size: 8px;
+            padding: 2px 6px;
+            background: var(--neon-pink);
+            color: #fff;
+            font-weight: bold;
+        }
+
+        /* Screen 3: Template Gallery Feed */
+        .feed-container {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            padding: 20px 0;
+            gap: 20px;
+        }
+        .feed-container::-webkit-scrollbar { display: none; }
+        
+        .feed-item {
+            min-width: 280px;
+            width: 280px;
+            height: 82%;
+            scroll-snap-align: center;
+            position: relative;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            transition: transform 0.3s;
+        }
+        .feed-container .feed-item:first-child { margin-left: 70px; }
+        .feed-container .feed-item:last-child { margin-right: 70px; }
+        
+        .feed-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        /* Native Ad Card Style */
+        .ad-card {
+            background: #11131c;
+            border: 1px dashed var(--neon-yellow);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 20px;
+        }
+        .ad-tag {
+            align-self: flex-start;
+            background: var(--neon-yellow);
+            color: #000;
+            font-family: var(--font-cyber);
+            font-size: 10px;
+            padding: 2px 6px;
+            font-weight: bold;
+        }
+
+        .feed-action-bar {
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            border-top: 1px solid var(--border-cyber);
+        }
+
+        /* Screen 4: Modding Garage Workspace */
+        #workspace-area {
+            flex: 1;
+            position: relative;
+            background: #000;
+            overflow: hidden;
+        }
+        #bg-target {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .canvas-sticker {
+            position: absolute;
+            cursor: move;
+            left: 40%;
+            top: 40%;
+            touch-action: none;
+            display: inline-block;
+            transform-origin: center center;
+        }
+        .canvas-sticker img {
+            pointer-events: none;
+            display: block;
+        }
+        .sticker-active-border {
+            border: 1px dashed var(--neon-cyan);
+        }
+        .sticker-del-btn {
+            position: absolute;
+            top: -12px;
+            right: -12px;
+            background: var(--neon-pink);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            font-size: 10px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 10;
+        }
+        .sticker-active-border .sticker-del-btn {
+            display: flex;
+        }
+
+        /* Thanh thông tin hướng dẫn scale ở góc workspace */
+        .scale-info-overlay {
+            position: absolute;
+            bottom: 8px;
+            left: 8px;
+            font-family: var(--font-cyber);
+            font-size: 9px;
+            color: var(--neon-cyan);
+            background: rgba(13, 14, 21, 0.8);
+            padding: 4px 8px;
+            border: 1px solid var(--border-cyber);
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        .garage-tools-bar {
+            background: var(--bg-card);
+            border-top: 1px solid var(--border-cyber);
+            padding: 12px;
+            display: flex;
+            justify-content: space-around;
+            z-index: 20;
+        }
+        .tool-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+            cursor: pointer;
+            font-family: var(--font-sub);
+            font-size: 12px;
+            transition: color 0.2s;
+        }
+        .tool-btn i { font-size: 18px; }
+        .tool-btn:hover, .tool-btn.active { color: var(--neon-cyan); }
+
+        /* Khay chứa Sticker pop-up */
+        .sticker-drawer {
+            position: absolute;
+            bottom: 65px;
+            left: 0;
+            width: 100%;
+            background: rgba(20, 22, 34, 0.95);
+            border-top: 2px solid var(--neon-cyan);
+            padding: 14px;
+            display: none;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            z-index: 30;
+        }
+        .drawer-item {
+            width: 100%;
+            height: 70px;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--border-cyber);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+        .drawer-item img {
+            max-width: 80%;
+            max-height: 80%;
+            object-fit: contain;
+        }
+
+        /* Screen 5: ZeroUI Preview Mode */
+        #screen-zeroui-preview {
+            background: #000;
+        }
+        .preview-layer {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+        }
+        .mock-hud-overlay {
+            position: absolute;
+            inset: 0;
+            box-shadow: inset 0 0 60px rgba(0,243,255,0.2);
+            padding: 30px 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .hud-top {
+            display: flex;
+            justify-content: space-between;
+            font-family: var(--font-cyber);
+            font-size: 11px;
+            color: var(--neon-cyan);
+        }
+        .hud-clock {
+            text-align: center;
+            margin-top: 40px;
+        }
+        .hud-time {
+            font-family: var(--font-cyber);
+            font-size: 48px;
+            font-weight: bold;
+            color: #fff;
+            text-shadow: 0 0 15px rgba(255,255,255,0.3);
+        }
+        .hud-date {
+            font-size: 14px;
+            color: var(--text-muted);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+        .mock-app-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            padding: 40px 10px;
+        }
+        .mock-app-icon {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            color: rgba(255,255,255,0.7);
+        }
+        .mock-app-icon .icon-box {
+            width: 45px;
+            height: 45px;
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(5px);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            color: #fff;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .preview-control-nav {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 65px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 16px;
+            z-index: 50;
+            background: linear-gradient(180deg, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0) 100%);
+        }
+        .preview-toggle-view-btn {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 50;
+            background: rgba(13,14,21,0.8);
+            border: 1px solid var(--neon-cyan);
+            color: #fff;
+            font-family: var(--font-cyber);
+            padding: 8px 16px;
+            font-size: 11px;
+            cursor: pointer;
+        }
+
+        /* Screen: Thư Viện Lưu Trữ */
+        .library-tabs {
+            display: flex;
+            border-bottom: 1px solid var(--border-cyber);
+        }
+        .lib-tab {
+            flex: 1;
+            text-align: center;
+            padding: 12px;
+            font-family: var(--font-cyber);
+            font-size: 12px;
+            color: var(--text-muted);
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+        }
+        .lib-tab.active {
+            color: var(--neon-cyan);
+            border-bottom-color: var(--neon-cyan);
+            background: rgba(0,243,255,0.02);
+        }
+        .library-footer-action {
+            padding: 12px;
+            background: var(--bg-card);
+            border-top: 1px solid var(--border-cyber);
+            display: none;
+            justify-content: center;
+        }
+
+        /* Screen: Settings */
+        .settings-list {
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .setting-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px;
+            background: #11131c;
+            border: 1px solid var(--border-cyber);
+            cursor: pointer;
+        }
+        .setting-item:active {
+            background: #161925;
+        }
+        .setting-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .setting-info i {
+            font-size: 16px;
+            color: var(--neon-cyan);
+            width: 20px;
+            text-align: center;
+        }
+        .setting-label {
+            font-family: var(--font-sub);
+            font-weight: 600;
+        }
+
+        /* --- MODALS SYSTEM --- */
+        .cyber-modal-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(5,5,8,0.85); 
+            border: 1px solid var(--border-cyber);
+            z-index: 200;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            backdrop-filter: blur(5px);
+        }
+        .cyber-modal {
+            width: 100%;
+            background: var(--bg-card);
+            border: 2px solid var(--border-cyber);
+            padding: 20px;
+            clip-path: polygon(0 0, calc(100% - 20px) 0, 100% 20px, 100% 100%, 20px 100%, 0 calc(100% - 20px));
+        }
+        .modal-title {
+            font-family: var(--font-cyber);
+            font-size: 14px;
+            color: #fff;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-transform: uppercase;
+        }
+        .modal-title i { color: var(--neon-yellow); }
+        .modal-body {
+            font-family: var(--font-sub);
+            color: var(--text-main);
+            font-size: 14px;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+        .modal-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        /* Mock App State Banner Alert Offline */
+        .mock-network-toast {
+            position: absolute;
+            top: 20px;
+            left: 16px;
+            right: 16px;
+            background: rgba(255, 0, 85, 1.0);
+            border: 1px solid var(--neon-pink);
+            padding: 8px 12px;
+            font-family: var(--font-cyber);
+            font-size: 10px;
+            color: #fff;
+            z-index: 90;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            clip-path: polygon(4px 0, 100% 0, 100% calc(100% - 4px), calc(100% - 4px) 100%, 0 100%, 0 4px);
+        }
+
+        /* Video Reward Fake Screen Overlay */
+        #video-ads-overlay {
+            position: absolute;
+            inset: 0;
+            background: #000;
+            z-index: 300;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        .countdown-circle {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            border: 3px solid var(--neon-pink);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: var(--font-cyber);
+            font-size: 20px;
+            font-weight: bold;
+            color: #fff;
+            box-shadow: 0 0 15px var(--neon-pink);
+            margin-bottom: 20px;
+        }
+        /* Định vị nút Test Toast cố định ở góc dưới phải của Smartphone */
+        #btn-test-toast {
+            position: absolute;
+            bottom: 15px;
+            right: 16px;
+            font-size: 10px;
+            padding: 6px 12px;
+            border-color: var(--neon-yellow);
+            color: var(--bg-amoled);
+            z-index: 95; 
+            background: rgb(244 227 11);
+        }
+
+        #btn-test-toast:hover {
+            background: rgb(97 91 12);
+            box-shadow: 0 0 10px rgba(255, 238, 0, 0.2);
+            color: var(--text-main);
+        }
+
+        /* KEYFRAME MATRIX GRADIENT SCAN */
+        @keyframes matrix-fluid-scan {
+            0% { left: -50%; }
+            100% { left: 110%; }
+        }
+        @keyframes glitch {
+            0% { text-shadow: 2px 0 var(--neon-cyan), -2px 0 var(--neon-pink); }
+            50% { text-shadow: -3px 0 var(--neon-yellow), 2px 0 var(--neon-cyan); }
+            100% { text-shadow: 2px 0 var(--neon-pink), -2px 0 var(--neon-yellow); }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="phone-wrapper">
+
+        <div id="toast-network-status" class="mock-network-toast" style="display: none;">
+            <i class="fa-solid fa-wifi-slash" style="color:var(--neon-pink)"></i>
+            <span>OFFLINE_MODE // INTERNET DISCONNECTED</span>
+        </div>
+
+        <div class="cyber-modal-overlay" id="modal-global-loading" style="z-index: 999; flex-direction: column;">
+            <div class="cyber-scan-loader-box">
+                <div class="cyber-scan-track">
+                    <div class="cyber-scan-fluid-bar"></div>
+                </div>
+            </div>
+            <div id="loading-status-text" style="color:var(--neon-cyan); font-family:var(--font-cyber); margin-top:15px; font-size:12px; letter-spacing:2px; text-shadow: 0 0 5px var(--neon-cyan);">PROCESSING...</div>
+        </div>
+
+        <div id="screen-loading" class="app-screen active">
+            <div class="glitch-title">SYSTEM.ROOT</div>
+            <div class="cyber-scan-loader-box">
+                <div class="cyber-scan-track">
+                    <div class="cyber-scan-fluid-bar"></div>
+                </div>
+                <div class="cyber-scan-bitstream" id="shell-boot-bits">10101100</div>
+            </div>
+            <div style="position:absolute; bottom:20px; display:flex; gap:10px;">
+                <button class="cyber-btn" id="mock-trigger-online" style="font-size:9px; padding:4px 8px; border-color:green" onclick="simulateNetworkState(true)">MẠNG: ON</button>
+                <button class="cyber-btn" id="mock-trigger-offline" style="font-size:9px; padding:4px 8px; border-color:var(--neon-pink)" onclick="simulateNetworkState(false)">MẠNG: OFF</button>
+            </div>
+        </div>
+
+        <div id="screen-home" class="app-screen">
+            <div class="cyber-header">
+                <button class="header-btn" onclick="switchScreen('screen-library')"><i class="fa-solid fa-folder-open"></i></button>
+                <h2>SYSTEM.ROOT</h2>
+                <button class="header-btn" onclick="switchScreen('screen-settings')"><i class="fa-solid fa-gear"></i></button>
+            </div>
+            
+            <div class="category-scroll" id="home-category-container"></div>
+
+            <div class="filter-container">
+                <button class="filter-btn" id="btn-filter-fav" onclick="toggleFavFilter()">
+                    <i class="fa-solid fa-heart"></i> MỤC YÊU THÍCH
+                </button>
+                <span style="margin-left:auto; font-size:11px; color:var(--text-muted); cursor:pointer;" onclick="toggleNetworkSimulationRuntime()">
+                    [SIM_NET: <b id="net-indicator-label" style="color:lightgreen">ONLINE</b>]
+                </span>
+            </div>
+
+            <div class="grid-content" id="home-themes-grid"></div>
+        </div>
+
+        <div id="screen-gallery" class="app-screen">
+            <div class="cyber-header">
+                <button class="header-btn" onclick="switchScreen('screen-home')"><i class="fa-solid fa-arrow-left"></i></button>
+                <h2>THEME.PREVIEW</h2>
+                <button class="cyber-btn primary" style="padding: 4px 10px; font-size:10px" onclick="triggerApplyPremiumPaywall()">APPLY</button>
+            </div>
+
+            <div class="feed-container" id="gallery-feed-wrapper" onscroll="handleFeedScrollCheckOffline()"></div>
+
+            <div class="feed-action-bar">
+                <button class="cyber-btn pink filled" style="width: 100%;" onclick="openModGarage()">
+                    <i class="fa-solid fa-screwdriver-wrench"></i> CUSTOMIZE THEMING (MOD ENGINE)
+                </button>
+            </div>
+        </div>
+
+        <div id="screen-garage" class="app-screen">
+            <div class="cyber-header">
+                <button class="header-btn" onclick="handleGarageBack()"><i class="fa-solid fa-arrow-left"></i></button>
+                <div style="display:flex; gap: 10px;">
+                    <button class="header-btn" onclick="undoSticker()" title="Hoàn tác"><i class="fa-solid fa-rotate-left"></i></button>
+                    <button class="header-btn" onclick="enterZeroUI()" title="Xem trước"><i class="fa-solid fa-eye"></i></button>
+                </div>
+                <button class="cyber-btn primary" style="padding: 4px 10px; font-size:10px" onclick="triggerApplyPaywall()">APPLY</button>
+            </div>
+
+            <div id="workspace-area">
+                <img id="bg-target" src="" alt="Workspace Matrix">
+                <div class="scale-info-overlay">Cuộn chuột hoặc Nhúm 2 ngón tay để Phóng to/Thu nhỏ linh kiện</div>
+            </div>
+
+            <div class="sticker-drawer" id="sticker-drawer-pane">
+                <div class="drawer-item" onclick="addStickerToCanvas('https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=120&auto=format&fit=crop&q=60')">
+                    <img src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=120&auto=format&fit=crop&q=60" alt="Cyber Shape">
+                </div>
+                <div class="drawer-item" onclick="addStickerToCanvas('https://i.imgur.com/K3pSOnY.png')">
+                    <span style="color:var(--neon-cyan); font-family:var(--font-cyber); font-size:11px;">[HUD_01]</span>
+                </div>
+                <div class="drawer-item" onclick="addStickerToCanvas('https://i.imgur.com/U899T9L.png')">
+                    <span style="color:var(--neon-pink); font-family:var(--font-cyber); font-size:11px;">[BAR_CMD]</span>
+                </div>
+                <div class="drawer-item" onclick="addStickerToCanvas('https://images.unsplash.com/photo-1579546929518-9e396f3cc809?w=120&auto=format&fit=crop&q=60')">
+                    <img src="https://images.unsplash.com/photo-1579546929518-9e396f3cc809?w=120&auto=format&fit=crop&q=60" alt="Hologram">
+                </div>
+            </div>
+
+            <div class="garage-tools-bar">
+                <button class="tool-btn" onclick="handleRemoveBgWithNetworkCheck()">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i><span>Rem BG</span>
+                </button>
+                <button class="tool-btn" onclick="addTextToCanvas()">
+                    <i class="fa-solid fa-font"></i><span>Thêm Chữ</span>
+                </button>
+                <button class="tool-btn" id="btn-toggle-sticker-drawer" onclick="toggleStickerDrawer()">
+                    <i class="fa-solid fa-face-smile"></i><span>Sticker</span>
+                </button>
+                <button class="tool-btn" onclick="mockUploadUserImage()">
+                    <i class="fa-solid fa-image"></i><span>Thêm Ảnh</span>
+                </button>
+            </div>
+        </div>
+
+        <div id="screen-zeroui-preview" class="app-screen">
+            <div class="preview-control-nav">
+                <button class="header-btn" style="background: rgba(0,0,0,0.5); border-radius:50%;" onclick="exitZeroUI()"><i class="fa-solid fa-xmark"></i></button>
+                <div></div>
+            </div>
+
+            <div id="preview-mirror-workspace" style="position:absolute; inset:0;"></div>
+
+            <div class="preview-layer" id="preview-hud-layer">
+                <div class="mock-hud-overlay">
+                    <div class="hud-top">
+                        <span>NET.CRITICAL // 5G</span>
+                        <span>BATTERY // 99%</span>
+                    </div>
+                    
+                    <div class="hud-clock" id="hud-clock-widget">
+                        <div class="hud-time">22:45</div>
+                        <div class="hud-date">OCTOBER 24 // NEO-TOKYO</div>
+                    </div>
+
+                    <div class="mock-app-grid" id="hud-apps-widget" style="display: none;">
+                        <div class="mock-app-icon"><div class="icon-box"><i class="fa-solid fa-terminal"></i></div><span>Terminal</span></div>
+                        <div class="mock-app-icon"><div class="icon-box"><i class="fa-solid fa-shield-halved"></i></div><span>Proxy</span></div>
+                        <div class="mock-app-icon"><div class="icon-box"><i class="fa-solid fa-bolt"></i></div><span>Core.Mod</span></div>
+                        <div class="mock-app-icon"><div class="icon-box"><i class="fa-solid fa-network-wired"></i></div><span>Nodes</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <button class="preview-toggle-view-btn" onclick="togglePreviewDisplayMode()">SWITCH DISPLAY MODE</button>
+        </div>
+
+        <div id="screen-library" class="app-screen">
+            <div class="cyber-header">
+                <button class="header-btn" onclick="switchScreen('screen-home')"><i class="fa-solid fa-arrow-left"></i></button>
+                <h2>MY.STORAGE</h2>
+                <button class="cyber-btn pink" id="btn-bulk-select" style="padding:4px 10px; font-size:10px;" onclick="toggleBulkSelectMode()">SELECT</button>
+            </div>
+
+            <div class="library-tabs">
+                <div class="lib-tab active" id="tab-lib-wallpaper" onclick="switchLibraryTab('wallpaper')">TOPIC WALLPAPER</div>
+                <div class="lib-tab" id="tab-lib-draft" onclick="switchLibraryTab('draft')">DRAFTS</div>
+            </div>
+
+            <div class="grid-content" id="library-items-grid"></div>
+
+            <div class="library-footer-action" id="library-delete-bar">
+                <button class="cyber-btn pink filled" style="width:100%" onclick="executeDeleteSelected()">
+                    <i class="fa-solid fa-trash"></i> DELETE SELECTED MATRIX
+                </button>
+            </div>
+        </div>
+
+        <div id="screen-lib-wall-detail" class="app-screen">
+            <div class="cyber-header" style="background:transparent; border:none; position:absolute; width:100%;">
+                <button class="header-btn" style="background:rgba(0,0,0,0.5); border-radius:50%;" onclick="switchScreen('screen-library')"><i class="fa-solid fa-arrow-left"></i></button>
+                <button class="header-btn" style="background:rgba(0,0,0,0.5); border-radius:50%;" onclick="showLoadingModal('EXPORTING TO DEVICE...', () => { alert('Image Saved!'); })"><i class="fa-solid fa-download"></i></button>
+            </div>
+            <img id="detail-wall-img" src="" style="width:100%; height:100%; object-fit:cover;">
+            <div style="position:absolute; bottom:30px; width:100%; display:flex; justify-content:space-evenly;">
+                <button class="cyber-btn" style="background:rgba(13,14,21,0.9)" onclick="switchScreen('screen-garage')">[ RE-MODDING ]</button>
+                <button class="cyber-btn primary" onclick="openModal('modal-set-wallpaper')">[ APPLY MATRIX ]</button>
+            </div>
+        </div>
+
+        <div id="screen-lib-draft-detail" class="app-screen">
+            <button class="header-btn" style="position:absolute; top:20px; left:10px; z-index:50; background:rgba(0,0,0,0.5); border-radius:50%;" onclick="switchScreen('screen-library')"><i class="fa-solid fa-xmark"></i></button>
+            <img id="detail-draft-img" src="" style="width:100%; height:100%; object-fit:cover;">
+            <div style="position:absolute; bottom:30px; width:100%; display:flex; justify-content:center;">
+                <button class="cyber-btn pink filled" style="padding:12px 40px;" onclick="switchScreen('screen-garage')">CONTINUE MODDING</button>
+            </div>
+        </div>
+
+        <div id="screen-settings" class="app-screen">
+            <div class="cyber-header">
+                <button class="header-btn" onclick="switchScreen('screen-home')"><i class="fa-solid fa-arrow-left"></i></button>
+                <h2>SYSTEM.CFG</h2>
+                <div></div>
+            </div>
+
+            <div class="settings-list">
+                <div class="setting-item" onclick="alert('Gửi phản hồi đến: developer@modengine.sys')">
+                    <div class="setting-info">
+                        <i class="fa-solid fa-comment-dots"></i>
+                        <span class="setting-label">FEEDBACK TO TERMINAL</span>
+                    </div>
+                    <i class="fa-solid fa-chevron-right" style="color:var(--text-muted)"></i>
+                </div>
+                <div class="setting-item" onclick="switchScreen('screen-share')">
+                    <div class="setting-info">
+                        <i class="fa-solid fa-share-nodes"></i>
+                        <span class="setting-label">SHARE SECURE NODE</span>
+                    </div>
+                    <i class="fa-solid fa-chevron-right" style="color:var(--text-muted)"></i>
+                </div>
+                <div class="setting-item" onclick="alert('Cảm ơn bạn đã đánh giá 5 sao trên CyberStore!')">
+                    <div class="setting-info">
+                        <i class="fa-solid fa-star"></i>
+                        <span class="setting-label">RATE APP ON NET.STORE</span>
+                    </div>
+                    <i class="fa-solid fa-chevron-right" style="color:var(--text-muted)"></i>
+                </div>
+                <div class="setting-item" onclick="alert('Chính sách bảo mật dữ liệu mã hóa đầu cuối AES-256.')">
+                    <div class="setting-info">
+                        <i class="fa-solid fa-user-shield"></i>
+                        <span class="setting-label">PRIVACY MATRIX POLICY</span>
+                    </div>
+                    <i class="fa-solid fa-chevron-right" style="color:var(--text-muted)"></i>
+                </div>
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <i class="fa-solid fa-globe"></i>
+                        <span class="setting-label">SYSTEM LANGUAGE</span>
+                    </div>
+                    <span style="color:var(--text-muted); font-family:var(--font-cyber); font-size:12px;">VIETNAMESE</span>
+                </div>
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <i class="fa-solid fa-microchip"></i>
+                        <span class="setting-label">CORE VERSION</span>
+                    </div>
+                    <span style="color:var(--text-muted); font-family:var(--font-cyber); font-size:12px;">v1.0.0</span>
+                </div>
+            </div>
+        </div>
+
+        <div id="screen-share" class="app-screen">
+            <div class="cyber-header">
+                <button class="header-btn" onclick="switchScreen('screen-settings')"><i class="fa-solid fa-arrow-left"></i></button>
+                <h2>NODE.SHARE</h2>
+                <button class="header-btn" onclick="switchScreen('screen-home')" style="color:var(--neon-cyan)"><i class="fa-solid fa-house"></i></button>
+            </div>
+            <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:20px; padding:20px;">
+                <i class="fa-solid fa-share-nodes" style="font-size:60px; color:var(--neon-cyan); text-shadow:0 0 15px var(--neon-cyan)"></i>
+                <p style="text-align:center; color:var(--text-main); font-family:var(--font-cyber);">TRANSMIT YOUR MATRIX TO EXTERNAL NODES</p>
+                <div style="display:flex; gap:15px; margin-top:20px;">
+                    <button class="header-btn" style="background:#1877F2; color:#fff; border-radius:10px; width:50px; height:50px;" onclick="simulateShareAction('Facebook')"><i class="fa-brands fa-facebook-f"></i></button>
+                    <button class="header-btn" style="background:#E1306C; color:#fff; border-radius:10px; width:50px; height:50px;" onclick="simulateShareAction('Instagram')"><i class="fa-brands fa-instagram"></i></button>
+                    <button class="header-btn" style="background:#000; color:#fff; border:1px solid var(--border-cyber); border-radius:10px; width:50px; height:50px;" onclick="simulateShareAction('TikTok')"><i class="fa-brands fa-tiktok"></i></button>
+                </div>
+            </div>
+        </div>
+
+        <div class="cyber-modal-overlay" id="modal-network-error">
+            <div class="cyber-modal" style="border-color: var(--neon-pink);">
+                <div class="modal-title" style="color: var(--neon-pink);">
+                    <i class="fa-solid fa-triangle-exclamation"></i> CONNECTION ERROR
+                </div>
+                <div class="modal-body">
+                    Mất kết nối mạng. Vui lòng kiểm tra Wifi hoặc Dữ liệu di động để không làm gián đoạn trạm độ.
+                </div>
+                <div class="modal-actions">
+                    <button class="cyber-btn pink filled" onclick="openSystemNetworkSettings()"><i class="fa-solid fa-gear"></i> SETTINGS</button>
+                    <button class="cyber-btn primary" onclick="retryInterruptedTask()"><i class="fa-solid fa-rotate"></i> RETRY</button>
+                    
+                    <button class="cyber-btn" id="mock-trigger-online" style="border-color: #00ff66; color: #00ff66;" onclick="simulateNetworkState(true)">
+                        <i class="fa-solid fa-wifi"></i> KÍCH HOẠT MẠNG: ON
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="cyber-modal-overlay" id="modal-unsaved-changes">
+            <div class="cyber-modal">
+                <div class="modal-title"><i class="fa-solid fa-triangle-exclamation"></i> ALERT: UNSAVED CHANGES</div>
+                <div class="modal-body">Bạn đang rời khỏi Modding Garage mà chưa lưu trữ cấu hình thiết kế này vào lõi hệ thống. Chọn phương thức tiếp tục:</div>
+                <div class="modal-actions">
+                    <button class="cyber-btn primary" onclick="garageExitAction('save')">SAVE DRAFT & RETURN</button>
+                    <button class="cyber-btn pink" onclick="garageExitAction('discard')">HỦY BỎ THAY ĐỔI</button>
+                    <button class="cyber-btn" style="border-color:var(--text-muted); color:var(--text-muted)" onclick="garageExitAction('keep')">KEEP EDITING</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="cyber-modal-overlay" id="modal-video-paywall">
+            <div class="cyber-modal">
+                <div class="modal-title"><i class="fa-solid fa-lock"></i> SECURED MATRIX KEY</div>
+                <div class="modal-body">Gói giao diện hoặc tính năng này yêu cầu kết nối luồng dữ liệu quảng cáo (Reward Video Ad) để mở khóa tài nguyên miễn phí.</div>
+                <div class="modal-actions">
+                    <button class="cyber-btn primary" onclick="startRewardVideoSequence()"><i class="fa-solid fa-play"></i> ĐỒNG Ý XEM VIDEO ADS</button>
+                    <button class="cyber-btn" style="border-color:var(--text-muted); color:var(--text-muted)" onclick="closeModal('modal-video-paywall')">KHÔNG XEM VIDEO</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="cyber-modal-overlay" id="modal-set-wallpaper">
+            <div class="cyber-modal">
+                <div class="modal-title"><i class="fa-solid fa-desktop"></i> INITIALIZE WALLPAPER</div>
+                <div class="modal-body">Chọn phân vùng hiển thị hệ thống bạn muốn áp dụng cấu trúc giao diện Hologram này:</div>
+                <div class="modal-actions">
+                    <button class="cyber-btn primary" onclick="finalizeWallpaperDeployment('HOME_SCREEN')">SET HOME SCREEN</button>
+                    <button class="cyber-btn primary" onclick="finalizeWallpaperDeployment('LOCK_SCREEN')">SET LOCK SCREEN</button>
+                    <button class="cyber-btn primary" onclick="finalizeWallpaperDeployment('BOTH')">DEPLOY TO BOTH SCREENS</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="video-ads-overlay">
+            <div style="font-family:var(--font-cyber); font-size:12px; color:var(--text-muted); margin-bottom:10px; letter-spacing:2px">STREAMING REWARD SPONSOR ENGINES...</div>
+            <div class="countdown-circle" id="ads-countdown-number">5</div>
+            <div style="width:80%; max-width:300px; height:160px; border:1px solid #334155; display:flex; align-items:center; justify-content:center; background:#11131c;">
+                <span style="font-family:var(--font-cyber); color:var(--neon-cyan); font-size:13px; text-shadow:0 0 5px var(--neon-cyan)">[CYBERPUNK_2077_MOCK_AD.MOV]</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- DATA FACTORY ---
+        const CATEGORIES = ["ALL SYSTEM", "JDM RACING", "CYBERPUNK", "SCI-FI HUD", "HYPERCAR"];
+        
+        const MOCK_THEMES = [
+            { id: 1, title: "NISSAN GTR R35 NEO", category: "JDM RACING", img: "https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?w=400&auto=format&fit=crop&q=80", premium: false, favorite: false },
+            { id: 2, title: "NEO-TOKYO STREETS 2077", category: "CYBERPUNK", img: "https://images.unsplash.com/photo-1542838132-92c53300491e?w=400&auto=format&fit=crop&q=80", premium: true, favorite: false },
+            { id: 3, title: "HUD ORBITAL ENGINE", category: "SCI-FI HUD", img: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=400&auto=format&fit=crop&q=80", premium: false, favorite: true },
+            { id: 4, title: "LAMBORGHINI APEX RAW", category: "HYPERCAR", img: "https://images.unsplash.com/photo-1614162692292-7ac56d7f7f1e?w=400&auto=format&fit=crop&q=80", premium: true, favorite: false },
+            { id: 5, title: "HONDA NSX MATRIX", category: "JDM RACING", img: "https://images.unsplash.com/photo-1605559424843-9e4c228bf1c2?w=400&auto=format&fit=crop&q=80", premium: false, favorite: false },
+            { id: 6, title: "CHIRON DEEP PURPLE", category: "HYPERCAR", img: "https://images.unsplash.com/photo-1600706432502-75a0e2b4202c?w=400&auto=format&fit=crop&q=80", premium: false, favorite: false }
+        ];
+
+        // --- GLOBAL STATE TERMINAL ---
+        let selectedCategory = "ALL SYSTEM";
+        let favoriteFilterActive = false;
+        let selectedTheme = MOCK_THEMES[0];
+        let libraryActiveTab = "wallpaper";
+        let bulkSelectMode = false;
+        let selectedLibraryItems = [];
+        
+        let savedWallpapers = [
+            { id: 101, title: "DEPLOYED_CORE_A", img: "https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?w=400&auto=format&fit=crop&q=80" }
+        ];
+        let savedDrafts = [];
+
+        let activeStickerNode = null;
+        let undoStackStickers = [];
+
+        // --- CORES INTERNET MANAGEMENT MECHANICS ---
+        let isOnlineSimulation = true; 
+        let interruptedTask = null;    
+
+        function checkNetworkStatus() { return isOnlineSimulation; }
+
+        function simulateNetworkState(state) {
+            isOnlineSimulation = state;
+            handleFeedScrollCheckOffline();
+            const label = document.getElementById('net-indicator-label');
+            if (!isOnlineSimulation) {
+                toast();
+                if(label) { label.innerText = "OFFLINE"; label.style.color = "var(--neon-pink)"; }
+            } else {
+                if(label) { label.innerText = "ONLINE"; label.style.color = "lightgreen"; }
+            }
+        }
+
+        function toast() {
+            const toast = document.getElementById('toast-network-status');
+            if (!toast) return;
+            toast.style.display = 'flex';
+            setTimeout(() => { toast.style.display = 'none'; }, 2000);
+        }
+
+        function toggleNetworkSimulationRuntime() { simulateNetworkState(!isOnlineSimulation); }
+        function openSystemNetworkSettings() { alert("Đã hiển thị màn hình Cài đặt mạng của hệ điều hành thiết bị!"); }
+
+        function retryInterruptedTask() {
+            if (checkNetworkStatus()) {
+                closeModal('modal-network-error');
+                if (interruptedTask && typeof interruptedTask === 'function') {
+                    const taskToRun = interruptedTask;
+                    interruptedTask = null; 
+                    taskToRun();
+                }
+            } else {
+                const modal = document.querySelector('#modal-network-error .cyber-modal');
+                modal.style.transform = 'scale(1.02)';
+                setTimeout(() => modal.style.transform = 'scale(1)', 100);
+            }
+        }
+
+        document.getElementById('modal-network-error').addEventListener('click', function(e) {
+            if (e.target === this) e.stopPropagation();
+        });
+
+        // --- RUNTIME RANDOM BINARY STREAM GENERATOR ---
+        setInterval(() => {
+            const makeBits = () => (Math.random() > 0.5 ? "1" : "0") + (Math.random() > 0.5 ? "1" : "0") + (Math.random() > 0.5 ? "1" : "0") + (Math.random() > 0.5 ? "1" : "0") + (Math.random() > 0.5 ? "1" : "0") + (Math.random() > 0.5 ? "1" : "0") + (Math.random() > 0.5 ? "1" : "0") + (Math.random() > 0.5 ? "1" : "0");
+            const bitsNode = document.getElementById('shell-boot-bits');
+            if (bitsNode) bitsNode.innerText = makeBits();
+        }, 150);
+
+        // --- GLOBAL LOADING FUNC (MỚI THEO FRD) ---
+        function showLoadingModal(textStr, callback = null) {
+            if (!checkNetworkStatus()) {
+                interruptedTask = () => showLoadingModal(textStr, callback);
+                openModal('modal-network-error');
+                return;
+            }
+            document.getElementById('loading-status-text').innerText = textStr;
+            openModal('modal-global-loading');
+            setTimeout(() => {
+                closeModal('modal-global-loading');
+                if(callback) callback();
+            }, 1500);
+        }
+
+        // --- LIFE CYCLE INIT ---
+        window.addEventListener('DOMContentLoaded', () => { executeLoadingSequence(); });
+
+        function executeLoadingSequence() {
+            if (!checkNetworkStatus()) {
+                interruptedTask = executeLoadingSequence;
+                openModal('modal-network-error');
+                return;
+            }
+            setTimeout(() => {
+                document.getElementById('screen-loading').style.display = 'none';
+                switchScreen('screen-home');
+                initHomeData();
+            }, 2500);
+        }
+
+        // --- NAVIGATION ARCHITECTURE ---
+        function switchScreen(screenId) {
+            document.querySelectorAll('.app-screen').forEach(scr => scr.classList.remove('active'));
+            document.getElementById(screenId).classList.add('active');
+            
+            if(screenId === 'screen-home') { renderHomeGrid(); } 
+            else if(screenId === 'screen-library') { renderLibraryGrid(); }
+        }
+
+        // --- SCREEN 2: HOME COMPONENT LOGIC ---
+        function initHomeData() {
+            const catContainer = document.getElementById('home-category-container');
+            catContainer.innerHTML = CATEGORIES.map(cat => `
+                <button class="category-tab ${cat === selectedCategory ? 'active' : ''}" onclick="selectCategory('${cat}')">${cat}</button>
+            `).join('');
+            renderHomeGrid();
+        }
+
+        function selectCategory(cat) { selectedCategory = cat; initHomeData(); }
+
+        function toggleFavFilter() {
+            favoriteFilterActive = !favoriteFilterActive;
+            const btn = document.getElementById('btn-filter-fav');
+            if(favoriteFilterActive) { btn.classList.add('active'); } 
+            else { btn.classList.remove('active'); }
+            renderHomeGrid();
+        }
+
+        function toggleFavoriteStatus(themeId, event) {
+            event.stopPropagation();
+            const theme = MOCK_THEMES.find(t => t.id === themeId);
+            if(theme) {
+                theme.favorite = !theme.favorite;
+                renderHomeGrid();
+            }
+        }
+
+        function clickThemeCard(themeId) {
+            selectedTheme = MOCK_THEMES.find(t => t.id === themeId);
+            openGalleryFeed();
+        }
+
+        function renderHomeGrid() {
+            const grid = document.getElementById('home-themes-grid');
+            let filtered = MOCK_THEMES;
+
+            if(selectedCategory !== "ALL SYSTEM") filtered = filtered.filter(t => t.category === selectedCategory);
+            if(favoriteFilterActive) filtered = filtered.filter(t => t.favorite);
+
+            if(filtered.length === 0) {
+                grid.innerHTML = `<div style="grid-column: span 2; text-align:center; color:var(--text-muted); padding-top:40px; font-family:var(--font-cyber)">NO CORE MATRIX FOUND</div>`;
+                return;
+            }
+
+            grid.innerHTML = filtered.map(theme => `
+                <div class="theme-card cyber-panel" onclick="clickThemeCard(${theme.id})">
+                    <button class="fav-btn ${theme.favorite ? 'active' : ''}" onclick="toggleFavoriteStatus(${theme.id}, event)">
+                        <i class="fa-${theme.favorite ? 'solid' : 'regular'} fa-heart"></i>
+                    </button>
+                    ${theme.premium ? `<span class="card-badge">PREMIUM</span>` : ''}
+                    <img src="${theme.img}" alt="${theme.title}">
+                    <div class="card-overlay">
+                        <div class="card-title">${theme.title}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // --- SCREEN 3: TEMPLATE GALLERY FEED ---
+        function openGalleryFeed() {
+            switchScreen('screen-gallery');
+            const feedWrapper = document.getElementById('gallery-feed-wrapper');
+            
+            let itemsHTML = `
+                <div class="feed-item cyber-panel">
+                    ${selectedTheme.premium ? `<span class="card-badge" style="z-index:5">PREMIUM</span>` : ''}
+                    <img src="${selectedTheme.img}" alt="Selected Base">
+                </div>
+            `;
+
+            itemsHTML += `
+                <div class="feed-item cyber-panel ad-card">
+                    <div class="ad-tag">SPONSORED FEED AD</div>
+                    <div style="font-family: var(--font-cyber); font-size:16px; color:var(--neon-cyan);">ROG ALLY Z1 EXTREME</div>
+                    <div style="font-size:13px; color:var(--text-main)">Mod màn hình cực hardcore, tăng hiệu năng FPS ảo 200%. Click trải nghiệm ngay!</div>
+                    <button class="cyber-btn primary" style="width:100%" onclick="alert('Chuyển hướng đến Store tài trợ!')">ACCESS HYPERLINK</button>
+                </div>
+            `;
+
+            const relativeThemes = MOCK_THEMES.filter(t => t.id !== selectedTheme.id);
+            relativeThemes.forEach(t => {
+                itemsHTML += `
+                    <div class="feed-item cyber-panel" onclick="selectDifferentThemeFromFeed(${t.id})">
+                        ${t.premium ? `<span class="card-badge" style="z-index:5">PREMIUM</span>` : ''}
+                        <img src="${t.img}">
+                    </div>
+                `;
+            });
+
+            feedWrapper.innerHTML = itemsHTML;
+        }
+
+        function handleFeedScrollCheckOffline() {
+            if (!checkNetworkStatus()) {
+                interruptedTask = () => { openGalleryFeed(); };
+                openModal('modal-network-error');
+            } else {
+                closeModal('modal-network-error');
+            }
+        }
+
+        function selectDifferentThemeFromFeed(themeId) {
+            selectedTheme = MOCK_THEMES.find(t => t.id === themeId);
+            openGalleryFeed();
+        }
+
+        function openModGarage() {
+            switchScreen('screen-garage');
+            document.getElementById('bg-target').src = selectedTheme.img;
+            
+            const oldStickers = document.querySelectorAll('.canvas-sticker');
+            oldStickers.forEach(el => el.remove());
+            undoStackStickers = [];
+        }
+
+        // --- SCREEN 4: WORKSPACE ENGINE ---
+        function toggleStickerDrawer() {
+            const drawer = document.getElementById('sticker-drawer-pane');
+            const btn = document.getElementById('btn-toggle-sticker-drawer');
+            if(drawer.style.display === 'grid') {
+                drawer.style.display = 'none';
+                btn.classList.remove('active');
+            } else {
+                drawer.style.display = 'grid';
+                btn.classList.add('active');
+            }
+        }
+
+        function addStickerToCanvas(stickerSrc) {
+            const workspace = document.getElementById('workspace-area');
+            const stickerNode = document.createElement('div');
+            stickerNode.className = 'canvas-sticker';
+            stickerNode.dataset.scale = "1.0";
+            
+            if (stickerSrc.startsWith('http')) {
+                stickerNode.innerHTML = `
+                    <img src="${stickerSrc}" style="width:75px; height:auto;">
+                    <button class="sticker-del-btn" onclick="this.parentElement.remove()"><i class="fa-solid fa-xmark"></i></button>
+                `;
+            } else {
+                stickerNode.innerHTML = `
+                    ${stickerSrc}
+                    <button class="sticker-del-btn" onclick="this.parentElement.remove()"><i class="fa-solid fa-xmark"></i></button>
+                `;
+            }
+            
+            workspace.appendChild(stickerNode);
+            makeElementDraggableAndResizable(stickerNode);
+            toggleStickerDrawer();
+            undoStackStickers.push(stickerNode);
+        }
+
+        function addTextToCanvas() {
+            const textPrompt = prompt("Nhập ký tự tùy biến (Sci-Fi Text):", "SYS.DATA // OK");
+            if(textPrompt) {
+                const textHTML = `<div style="font-family:var(--font-cyber); color:var(--neon-yellow); font-size:14px; white-space:nowrap; text-shadow:0 0 5px var(--neon-yellow)">${textPrompt}</div>`;
+                addStickerToCanvas(textHTML);
+            }
+        }
+
+        function handleRemoveBgWithNetworkCheck() {
+            // [CẬP NHẬT GỌI LOADING NGẦM THEO FRD]
+            showLoadingModal("AI BACKGROUND REMOVAL MATRIX...", () => {
+                alert("System cloud action: Background Matrix optimized/Removed via Core server successful.");
+            });
+        }
+
+        function mockUploadUserImage() {
+            showLoadingModal("IMPORTING DEVICE IMAGE...", () => {
+                const mockUserImg = `https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=150&auto=format&fit=crop&q=60`;
+                addStickerToCanvas(mockUserImg);
+            });
+        }
+
+        function undoSticker() {
+            if(undoStackStickers.length > 0) {
+                const node = undoStackStickers.pop();
+                node.remove();
+            }
+        }
+
+        function makeElementDraggableAndResizable(elmnt) {
+            let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+            let startDist = 0, startScale = 1.0;
+
+            elmnt.addEventListener('wheel', function(e) {
+                e.preventDefault();
+                let currentScale = parseFloat(elmnt.dataset.scale || 1.0);
+                if (e.deltaY < 0) { currentScale = Math.min(currentScale + 0.1, 4.0); } 
+                else { currentScale = Math.max(currentScale - 0.1, 0.3); }
+                elmnt.dataset.scale = currentScale;
+                updateElementTransform(elmnt);
+            }, { passive: false });
+            
+            elmnt.addEventListener('mousedown', dragMouseDown);
+            elmnt.addEventListener('touchstart', dragTouchStart, {passive: false});
+
+            function dragMouseDown(e) {
+                e.preventDefault();
+                setActiveSticker(elmnt);
+                pos3 = e.clientX;
+                pos4 = e.clientY;
+                document.addEventListener('mouseup', closeDragElement);
+                document.addEventListener('mousemove', elementDrag);
+            }
+
+            function dragTouchStart(e) {
+                setActiveSticker(elmnt);
+                if (e.touches.length === 2) {
+                    startDist = getPinchDistance(e.touches);
+                    startScale = parseFloat(elmnt.dataset.scale || 1.0);
+                } else {
+                    pos3 = e.touches[0].clientX;
+                    pos4 = e.touches[0].clientY;
+                }
+                document.addEventListener('touchend', closeDragElement);
+                document.addEventListener('touchmove', elementTouchDrag, {passive: false});
+            }
+
+            function elementDrag(e) {
+                e.preventDefault();
+                pos1 = pos3 - e.clientX;
+                pos2 = pos4 - e.clientY;
+                pos3 = e.clientX;
+                pos4 = e.clientY;
+                elmnt.style.top = (elmnt.offsetTop - pos2) + "px";
+                elmnt.style.left = (elmnt.offsetLeft - pos1) + "px";
+            }
+
+            function elementTouchDrag(e) {
+                if (e.touches.length === 2 && startDist > 0) {
+                    e.preventDefault();
+                    const currentDist = getPinchDistance(e.touches);
+                    const factor = currentDist / startDist;
+                    let targetScale = startScale * factor;
+                    targetScale = Math.max(0.3, Math.min(targetScale, 4.0));
+                    elmnt.dataset.scale = targetScale;
+                    updateElementTransform(elmnt);
+                } else if (e.touches.length === 1) {
+                    pos1 = pos3 - e.touches[0].clientX;
+                    pos2 = pos4 - e.touches[0].clientY;
+                    pos3 = e.touches[0].clientX;
+                    pos4 = e.touches[0].clientY;
+                    elmnt.style.top = (elmnt.offsetTop - pos2) + "px";
+                    elmnt.style.left = (elmnt.offsetLeft - pos1) + "px";
+                }
+            }
+
+            function closeDragElement() {
+                startDist = 0;
+                document.removeEventListener('mouseup', closeDragElement);
+                document.removeEventListener('mousemove', elementDrag);
+                document.removeEventListener('touchend', closeDragElement);
+                document.removeEventListener('touchmove', elementTouchDrag);
+            }
+
+            function getPinchDistance(touches) {
+                const dx = touches[0].clientX - touches[1].clientX;
+                const dy = touches[0].clientY - touches[1].clientY;
+                return Math.sqrt(dx * dx + dy * dy);
+            }
+        }
+
+        function updateElementTransform(node) {
+            const scale = node.dataset.scale || 1.0;
+            node.style.transform = `scale(${scale})`;
+        }
+
+        document.getElementById('workspace-area').addEventListener('click', (e) => {
+            if(e.target.id === 'workspace-area' || e.target.id === 'bg-target') {
+                setActiveSticker(null);
+            }
+        });
+
+        function setActiveSticker(node) {
+            document.querySelectorAll('.canvas-sticker').forEach(el => el.classList.remove('sticker-active-border'));
+            if(node) node.classList.add('sticker-active-border');
+            activeStickerNode = node;
+        }
+
+        function handleGarageBack() { openModal('modal-unsaved-changes'); }
+
+        function garageExitAction(action) {
+            closeModal('modal-unsaved-changes');
+            if(action === 'save') {
+                // [CẬP NHẬT GỌI LOADING NGẦM THEO FRD]
+                showLoadingModal("SAVING MATRIX TO DRAFT...", () => {
+                    savedDrafts.push({
+                        id: Date.now(),
+                        title: `DRAFT_${selectedTheme.title.substring(0,5)}`,
+                        img: selectedTheme.img
+                    });
+                    switchScreen('screen-gallery');
+                });
+            } else if(action === 'discard') {
+                switchScreen('screen-gallery');
+            }
+        }
+
+        // --- SCREEN 5: ZERO UI PREVIEW CODE SYSTEM ---
+        let previewDisplayState = "CLOCK";
+
+        function enterZeroUI() {
+            switchScreen('screen-zeroui-preview');
+            setActiveSticker(null);
+            
+            const clone = document.getElementById('workspace-area').cloneNode(true);
+            clone.id = "cloned-workspace-core";
+            
+            const overlayInfo = clone.querySelector('.scale-info-overlay');
+            if(overlayInfo) overlayInfo.remove();
+            
+            const wrapper = document.getElementById('preview-mirror-workspace');
+            wrapper.innerHTML = "";
+            wrapper.appendChild(clone);
+            
+            wrapper.querySelectorAll('.sticker-del-btn').forEach(b => b.remove());
+            wrapper.querySelectorAll('.canvas-sticker').forEach(s => s.classList.remove('sticker-active-border'));
+        }
+
+        function exitZeroUI() { switchScreen('screen-garage'); }
+
+        function togglePreviewDisplayMode() {
+            const clockW = document.getElementById('hud-clock-widget');
+            const appsW = document.getElementById('hud-apps-widget');
+            if(previewDisplayState === "CLOCK") {
+                clockW.style.display = "none";
+                appsW.style.display = "grid";
+                previewDisplayState = "APPS";
+            } else {
+                clockW.style.display = "block";
+                appsW.style.display = "none";
+                previewDisplayState = "CLOCK";
+            }
+        }
+
+        // --- SCREEN: THƯ VIỆN LƯU TRỮ LOGIC ---
+        function switchLibraryTab(tab) {
+            libraryActiveTab = tab;
+            document.getElementById('tab-lib-wallpaper').classList.toggle('active', tab === 'wallpaper');
+            document.getElementById('tab-lib-draft').classList.toggle('active', tab === 'draft');
+            
+            if (tab === 'wallpaper' && !checkNetworkStatus()) {
+                interruptedTask = () => { renderLibraryGrid(); };
+                openModal('modal-network-error');
+                return;
+            }
+            renderLibraryGrid();
+        }
+
+        function toggleBulkSelectMode() {
+            bulkSelectMode = !bulkSelectMode;
+            selectedLibraryItems = [];
+            const btn = document.getElementById('btn-bulk-select');
+            const delBar = document.getElementById('library-delete-bar');
+            
+            if(bulkSelectMode) {
+                btn.innerText = "CANCEL";
+                delBar.style.display = "flex";
+            } else {
+                btn.innerText = "SELECT";
+                delBar.style.display = "none";
+            }
+            renderLibraryGrid();
+        }
+
+        function executeDeleteSelected() {
+            if(selectedLibraryItems.length === 0) return;
+            
+            // [CẬP NHẬT GỌI LOADING NGẦM THEO FRD]
+            showLoadingModal("PURGING MATRIX DATA...", () => {
+                if(libraryActiveTab === 'wallpaper') {
+                    savedWallpapers = savedWallpapers.filter(item => !selectedLibraryItems.includes(item.id));
+                } else {
+                    savedDrafts = savedDrafts.filter(item => !selectedLibraryItems.includes(item.id));
+                }
+                toggleBulkSelectMode();
+            });
+        }
+
+        function selectLibraryCard(id) {
+            if(!bulkSelectMode) return;
+            const idx = selectedLibraryItems.indexOf(id);
+            if(idx > -1) { selectedLibraryItems.splice(idx, 1); } 
+            else { selectedLibraryItems.push(id); }
+            renderLibraryGrid();
+        }
+
+        function handleLibraryItemClick(id, imgUrl) {
+            if(bulkSelectMode) {
+                selectLibraryCard(id);
+                return;
+            }
+            // Mở màn hình trung gian theo FRD
+            if(libraryActiveTab === 'wallpaper') {
+                document.getElementById('detail-wall-img').src = imgUrl;
+                switchScreen('screen-lib-wall-detail');
+            } else {
+                document.getElementById('detail-draft-img').src = imgUrl;
+                switchScreen('screen-lib-draft-detail');
+            }
+        }
+
+        function renderLibraryGrid() {
+            const grid = document.getElementById('library-items-grid');
+            let data = (libraryActiveTab === 'wallpaper') ? savedWallpapers : savedDrafts;
+
+            if(data.length === 0) {
+                grid.innerHTML = `<div style="grid-column: span 2; text-align:center; color:var(--text-muted); padding-top:40px; font-family:var(--font-cyber);">STORAGE EMPTY</div>`;
+                return;
+            }
+
+            grid.innerHTML = data.map(item => {
+                const isSelected = selectedLibraryItems.includes(item.id);
+                return `
+                    <div class="theme-card cyber-panel" onclick="handleLibraryItemClick(${item.id}, '${item.img}')" style="${isSelected ? 'border: 2px solid var(--neon-pink);' : ''}">
+                        ${bulkSelectMode ? `
+                            <div class="fav-btn" style="color: ${isSelected ? 'var(--neon-pink)' : '#fff'}">
+                                <i class="fa-solid ${isSelected ? 'fa-square-check' : 'fa-square'}"></i>
+                            </div>
+                        ` : ''}
+                        <img src="${item.img}">
+                        <div class="card-overlay">
+                            <div class="card-title">${item.title}</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // --- MONETIZATION & PREMIUM PAYWALL ENGINES ---
+        function triggerApplyPaywall() {
+            if (!checkNetworkStatus()) {
+                interruptedTask = triggerApplyPaywall;
+                openModal('modal-network-error');
+                return;
+            }
+            openModal('modal-video-paywall');
+        }
+
+        function triggerApplyPremiumPaywall() {
+            if (!checkNetworkStatus()) {
+                interruptedTask = triggerApplyPremiumPaywall;
+                openModal('modal-network-error');
+                return;
+            }
+            openModal('modal-set-wallpaper');
+        }
+
+        function startRewardVideoSequence() {
+            closeModal('modal-video-paywall');
+            const overlay = document.getElementById('video-ads-overlay');
+            const countdownEl = document.getElementById('ads-countdown-number');
+            overlay.style.display = 'flex';
+            
+            let count = 5;
+            countdownEl.innerText = count;
+            
+            const interval = setInterval(() => {
+                count--;
+                countdownEl.innerText = count;
+                if(count <= 0) {
+                    clearInterval(interval);
+                    overlay.style.display = 'none';
+                    openModal('modal-set-wallpaper');
+                }
+            }, 1000);
+        }
+
+        function finalizeWallpaperDeployment(type) {
+            closeModal('modal-set-wallpaper');
+            
+            showLoadingModal("SYSTEM APPLYING PROTOCOL...", () => {
+                alert(`SUCCESSFUL! Đã áp dụng giao diện Modding thành công cho: [${type}]`);
+                savedWallpapers.push({
+                    id: Date.now(),
+                    title: `DEPLOYED_${selectedTheme.title.substring(0,5)}`,
+                    img: selectedTheme.img
+                });
+                // Trả user về màn hình trước đó
+            });
+        }
+
+        // --- SETTINGS CORNER SYSTEM ACTIONS ---
+        function simulateShareAction(platform) {
+            showLoadingModal(`CONNECTING TO ${platform.toUpperCase()} API...`, () => {
+                alert(`Mô phỏng Share thành công lên hệ thống ${platform}!`);
+            });
+        }
+
+        // --- MODAL SYSTEM CORE UTILS ---
+        function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+    </script>
+</body>
+</html>
