@@ -1,0 +1,3 @@
+bmad-workflows-check-setup	inject	634		missing=2	1782379764532947700	1782379764790837200	0
+enforce-bmad-output-consistency	skip	0			1782379766497647400	1782379766659663000	0
+enforce-bmad-config-priority	inject	1		overrides=1 consumer_bmad=yes	1782379766473636100	1782379766710489700	0

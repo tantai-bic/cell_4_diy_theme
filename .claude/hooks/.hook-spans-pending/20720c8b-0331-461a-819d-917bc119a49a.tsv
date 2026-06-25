@@ -1,0 +1,75 @@
+enforce-bmad-config-priority	inject	1		overrides=1 consumer_bmad=yes	1782378285856453300	1782378286161146200	0
+enforce-bmad-output-consistency	skip	0			1782378285893781500	1782378286161164900	0
+enforce-bmad-output-consistency	skip	0			1782378330840543000	1782378331020748900	0
+enforce-bmad-config-priority	inject	1		overrides=1 consumer_bmad=yes	1782378330815734200	1782378331052431200	0
+enforce-bmad-output-consistency	skip	0			1782378347427808500	1782378347609261100	0
+enforce-bmad-config-priority	inject	1		overrides=1 consumer_bmad=yes	1782378347404274900	1782378347609258200	0
+enforce-bmad-agent-scope	skip	0		no_active_agent	1782378468378926300	1782378468735502400	0
+enforce-bmad-output-consistency	skip	0			1782378531825229000	1782378531989665900	0
+enforce-bmad-config-priority	inject	1		overrides=1 consumer_bmad=yes	1782378531802078800	1782378532022370400	0
+enforce-bmad-output-consistency	skip	0			1782378562408132600	1782378562576598600	0
+enforce-bmad-config-priority	inject	1		overrides=1 consumer_bmad=yes	1782378562382653400	1782378562592167100	0
+enforce-bmad-agent-scope	skip	0		no_active_agent	1782378640496112800	1782378640815384200	0
+enforce-bmad-agent-scope	skip	0		no_active_agent	1782378648170861600	1782378648495501900	0
+enforce-bmad-agent-scope	skip	0		no_active_agent	1782378658738722300	1782378659070898500	0
+enforce-bmad-agent-scope	skip	0		no_active_agent	1782378682119304700	1782378682464066200	0
+enforce-bmad-agent-scope	skip	0		no_active_agent	1782378692076875300	1782378692406235600	0
+enforce-bmad-agent-scope	skip	0		no_active_agent	1782378711786958800	1782378712120841800	0
+enforce-bmad-agent-scope	skip	0		no_active_agent	1782378719117781400	1782378719464890700	0
+enforce-bmad-agent-scope	skip	0		no_active_agent	1782378732659803800	1782378733024210300	0
+enforce-bmad-agent-scope	skip	0		no_active_agent	1782378739699310100	1782378740044784500	0
+enforce-bmad-agent-scope	skip	0		no_active_agent	1782378747278601100	1782378747611676900	0
+enforce-bmad-agent-scope	skip	0		no_active_agent	1782378772262030800	1782378772582159600	0
+enforce-bmad-agent-scope	skip	0		no_active_agent	1782378783652285800	1782378783968734100	0
+enforce-bmad-agent-scope	skip	0		no_active_agent	1782378790059110300	1782378790387676000	0
+enforce-bmad-agent-scope	skip	0		no_active_agent	1782378810582981400	1782378810903607900	0
+enforce-bmad-agent-scope	skip	0		no_active_agent	1782378819252882100	1782378819582371000	0
+enforce-bmad-agent-scope	skip	0		no_active_agent	1782378864151653300	1782378864508705300	0
+enforce-bmad-agent-scope	skip	0		no_active_agent	1782378883867965300	1782378884200330400	0
+enforce-bmad-agent-scope	skip	0		no_active_agent	1782378890554943000	1782378890886575400	0
+enforce-bmad-agent-scope	skip	0		no_active_agent	1782378897572042900	1782378897907094100	0
+enforce-bmad-agent-scope	skip	0		no_active_agent	1782378907233734500	1782378907583904600	0
+enforce-bmad-agent-scope	skip	0		no_active_agent	1782378929109426000	1782378929459964500	0
+enforce-bmad-agent-scope	skip	0		no_active_agent	1782378943597792000	1782378943923437000	0
+enforce-bmad-output-consistency	skip	0			1782379180522365800	1782379180708592300	0
+enforce-bmad-config-priority	inject	1		overrides=1 consumer_bmad=yes	1782379180501474900	1782379180720682900	0
+enforce-bmad-output-consistency	skip	0			1782379194145597400	1782379194317036200	0
+enforce-bmad-config-priority	inject	1		overrides=1 consumer_bmad=yes	1782379194121233600	1782379194332105900	0
+enforce-bmad-agent-scope	skip	0		no_active_agent	1782379262653491500	1782379263022515900	0
+enforce-bmad-agent-scope	skip	0		no_active_agent	1782379282901660500	1782379283278784500	0
+enforce-bmad-agent-scope	skip	0		no_active_agent	1782379296218972300	1782379296619790800	0
+enforce-bmad-agent-scope	skip	0		no_active_agent	1782379309971978700	1782379310292851200	0
+enforce-bmad-agent-scope	skip	0		no_active_agent	1782379345566732700	1782379345915431400	0
+enforce-bmad-output-consistency	skip	0			1782379539167154500	1782379539350296800	0
+enforce-bmad-config-priority	inject	1		overrides=1 consumer_bmad=yes	1782379539143019600	1782379539366914000	0
+enforce-bmad-agent-scope	skip	0		no_active_agent	1782379607311705400	1782379607718495900	0
+enforce-bmad-agent-scope	skip	0		no_active_agent	1782379628361550400	1782379628813682400	0
+enforce-bmad-agent-scope	skip	0		no_active_agent	1782379657102216900	1782379657498206000	0
+enforce-bmad-agent-scope	skip	0		no_active_agent	1782379665288631700	1782379665642379300	0
+enforce-bmad-agent-scope	skip	0		no_active_agent	1782379679568488400	1782379679910787700	0
+enforce-bmad-agent-scope	skip	0		no_active_agent	1782379685856707700	1782379686228078100	0
+enforce-bmad-agent-scope	skip	0		no_active_agent	1782379697925850300	1782379698317293800	0
+enforce-bmad-agent-scope	skip	0		no_active_agent	1782379706488348600	1782379706804766400	0
+enforce-bmad-agent-scope	skip	0		no_active_agent	1782379717014355500	1782379717341268400	0
+enforce-bmad-agent-scope	skip	0		no_active_agent	1782379726851380200	1782379727188895100	0
+enforce-bmad-agent-scope	skip	0		no_active_agent	1782379735098514800	1782379735425028100	0
+enforce-bmad-agent-scope	skip	0		no_active_agent	1782379750363196400	1782379750686458400	0
+enforce-bmad-config-priority	inject	1		overrides=1 consumer_bmad=yes	1782380039331542000	1782380039554990500	0
+enforce-bmad-output-consistency	skip	0			1782380039355887300	1782380039555017200	0
+enforce-bmad-agent-scope	skip	0		no_active_agent	1782380068834186600	1782380069158657000	0
+enforce-bmad-agent-scope	skip	0		no_active_agent	1782380077358830800	1782380077690286300	0
+enforce-bmad-agent-scope	skip	0		no_active_agent	1782380086715274800	1782380087060092800	0
+enforce-bmad-agent-scope	skip	0		no_active_agent	1782380101062416700	1782380101442486100	0
+enforce-bmad-agent-scope	skip	0		no_active_agent	1782380114259783800	1782380114557206000	0
+enforce-bmad-agent-scope	skip	0		no_active_agent	1782380130956384000	1782380131262721500	0
+enforce-bmad-agent-scope	skip	0		no_active_agent	1782380149979435700	1782380150352215400	0
+enforce-bmad-agent-scope	skip	0		no_active_agent	1782380164250919100	1782380164592227200	0
+enforce-bmad-config-priority	inject	1		overrides=1 consumer_bmad=yes	1782380227572315100	1782380227797561000	0
+enforce-bmad-output-consistency	skip	0			1782380227597286200	1782380227797472300	0
+enforce-bmad-config-priority	inject	1		overrides=1 consumer_bmad=yes	1782380247982392400	1782380248196961900	0
+enforce-bmad-output-consistency	skip	0			1782380248006704600	1782380248212402400	0
+enforce-bmad-config-priority	inject	1		overrides=1 consumer_bmad=yes	1782380452195458200	1782380452419183500	0
+enforce-bmad-output-consistency	skip	0			1782380452220159800	1782380452419134500	0
+enforce-bmad-agent-scope	skip	0		no_active_agent	1782380496237330000	1782380496593646100	0
+enforce-bmad-config-priority	inject	1		overrides=1 consumer_bmad=yes	1782382401351867200	1782382401666433800	0
+enforce-bmad-output-consistency	skip	0			1782382401387848800	1782382401666446700	0

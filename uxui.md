@@ -1,53 +1,209 @@
-Để chinh phục tệp user nam giới, gamer và người mê xe, UI/UX của ứng dụng không thể đi theo lối mòn "ngọt ngào, bo góc, nhiều icon nhí nhảnh" của các app hiện tại. Thay vào đó, giao diện cần mang cảm giác của một phần mềm tối ưu phần cứng (như MSI Afterburner, ASUS Armoury Crate) hoặc một trạm điều khiển (Control Hub) trong game.
+# UI/UX SPEC — DIY WALLPAPER MODDING ENGINE (`SYSTEM.ROOT`)
 
-1. Phong cách Thiết kế Trực quan (Visual UI)
+> Tài liệu này được rút ra trực tiếp từ prototype `index.html`. Mục tiêu: mô tả chính xác hệ thống thiết kế, các màn hình và luồng tương tác đang chạy để Dev/QA bám theo. Phần cuối ghi rõ các khoảng cách so với brief gốc.
 
-Bảng màu (Color Palette):
+---
 
-Nền tảng: Bắt buộc phải là True Dark Mode / AMOLED Black (màu đen sâu #000000 hoặc xám than #121212). Điều này không chỉ tạo cảm giác "ngầu" mà còn giúp tiết kiệm pin (yếu tố gamer rất quan tâm).
+## 0. Triết lý thiết kế (Design Direction)
 
-Màu nhấn (Accent Colors): Sử dụng các dải màu mang tính công nghệ, thể thao điện tử như: Đỏ ROG (Republic of Gamers), Xanh Neon (Razer), Vàng Cyberpunk, hoặc cho phép người dùng tự chỉnh mã màu HEX/RGB cho UI.
+Chinh phục tệp user nam giới, gamer và người mê xe. Giao diện **KHÔNG** đi theo lối "ngọt ngào, bo góc, icon nhí nhảnh". Thay vào đó toát lên cảm giác của một **phần mềm tối ưu phần cứng / trạm điều khiển (Control Hub)** kiểu MSI Afterburner, ASUS Armoury Crate hay HUD trong game.
 
-Nghệ thuật chữ (Typography):
+Nguyên tắc cốt lõi:
+- Mạnh mẽ, chuyên nghiệp, trao toàn quyền kiểm soát cho user.
+- True Dark / AMOLED làm nền tảng.
+- Hình khối góc cạnh (chamfered), không bo tròn mềm mại.
+- Tối giản số lần chạm để đến hành động (Min Clicks to Action).
 
-Loại bỏ các font chữ uốn lượn, mềm mại. Sử dụng các font chữ không chân (Sans-serif) góc cạnh, mang hơi hướng tương lai hoặc kỹ thuật: Orbitron, Rajdhani, Roboto Mono, hoặc Teko.
+---
 
-Hiển thị số liệu (như tốc độ khung hình, độ sáng) bằng font dạng đồng hồ điện tử.
+## 1. Hệ thống Thiết kế Trực quan (Visual System)
 
-Nút bấm & Biểu tượng (Buttons & Icons):
+### 1.1 Bảng màu (đang dùng trong code — CSS variables)
 
-Thiết kế góc cạnh (như hình lục giác, hình thang) thay vì bo tròn hoàn toàn.
+| Biến | Mã màu | Vai trò |
+|------|--------|---------|
+| `--bg-amoled` | `#050508` | Nền sâu nhất (loading, AMOLED) |
+| `--bg-cyber` | `#0d0e15` | Nền màn hình chính |
+| `--bg-card` | `#141622` | Nền card / panel / modal |
+| `--neon-cyan` | `#00f3ff` | Accent chính (primary action, active, glow) |
+| `--neon-pink` | `#ff0055` | Cảnh báo / destructive / premium badge |
+| `--neon-yellow` | `#ffee00` | Highlight / quảng cáo / category active |
+| `--text-main` | `#e2e8f0` | Chữ chính |
+| `--text-muted` | `#64748b` | Chữ phụ / disabled |
+| `--border-cyber` | `#1e293b` | Viền chuẩn |
 
-Sử dụng icon dạng đường viền sắc nét (Outline). Khi được chọn (Active), icon phát sáng (Glow effect) giống như đèn LED.
+> **Hướng nghệ thuật:** Cyberpunk (Cyan/Pink/Yellow). Chưa triển khai tùy biến HEX/RGB cho UI và chưa có preset ROG Red / Razer Green như brief gốc — xem mục 8.
 
-2. Trải nghiệm Người dùng Cốt lõi (Core UX)
+### 1.2 Typography
 
-Tương tác bằng Thanh trượt (Slider-based Interaction):
+- **`Orbitron`** (`--font-cyber`): tiêu đề, số liệu, nhãn kỹ thuật, nút — font góc cạnh tương lai.
+- **`Rajdhani`** (`--font-sub`): chữ thân, mô tả, label cài đặt.
+- Chữ kỹ thuật viết HOA, giãn ký tự (`letter-spacing`), nhiều nhãn dạng "code" (`SYSTEM.ROOT`, `NET.CRITICAL // 5G`).
 
-Thay vì bắt người dùng chọn các bộ lọc (filter) có sẵn, hãy cho họ cảm giác được "độ" (mod) bằng các thanh trượt thông số: Trượt để chỉnh cường độ sấm sét, trượt để tăng tốc độ quạt tản nhiệt trong hình nền 3D, trượt để đổi dải màu RGB.
+### 1.3 Ngôn ngữ hình khối (Chamfered Tech)
 
-Phản hồi xúc giác (Haptic Feedback):
+- `.cyber-panel` / `.cyber-btn` / `.cyber-switch` / `.cyber-modal` đều dùng `clip-path: polygon(...)` để cắt vát góc — không `border-radius` mềm.
+- Trạng thái **Active phát sáng** (Glow) qua `box-shadow` neon, mô phỏng đèn LED.
+- Icon dùng Font Awesome 6 dạng outline/solid; icon active đổi sang màu neon + glow.
+- Nút bấm có phản hồi nhấn: `:active { transform: scale(0.95); opacity: .8 }` (phản hồi cơ học bằng thị giác).
+- **Haptic Feedback:** đã có qua `navigator.vibrate` (`haptic()`) — rung khi hiện toast, chọn sao, và set wallpaper thành công.
 
-Mỗi khi người dùng kéo thanh trượt đến mức tối đa, hoặc bấm nút "Apply", điện thoại cần rung lên một nhịp chắc chắn. Điều này tạo cảm giác cơ học, giống như gạt cần số xe hoặc bấm phím cơ.
+### 1.4 Khung giả lập thiết bị
 
-Tối giản số lần chạm (Minimum Clicks to Action):
+Toàn app render trong `#phone-wrapper` (max 420×860px, viền + glow cyan) — mô phỏng màn hình smartphone, căn giữa viewport.
 
-Luồng thiết kế phải cực nhanh: Mở app -> Chọn phôi (Xe/Anime) -> Tinh chỉnh (HUD/Hiệu ứng) -> Preview Toàn màn hình -> Set Wallpaper.
+---
 
-Bỏ qua các bước trung gian rườm rà. Chế độ xem trước (Preview) cần ẩn toàn bộ thanh công cụ để họ thấy rõ thành phẩm.
+## 2. Kiến trúc Điều hướng (Navigation Architecture)
 
-3. Giao diện các Tính năng Chuyên biệt (Niche Features UI)
+Mô hình **single-page, nhiều `.app-screen`** chồng lớp, chuyển bằng `switchScreen(screenId)` (toggle class `.active`). Không có URL/route.
 
-Khu vực "Trạm độ xe" (Modding Garage): Thay vì gọi là "Chỉnh sửa" (Edit), có thể thiết kế khu vực này giống như một garage. Người dùng chọn các "Phụ tùng" (Parts) như: Đèn pha (Lens flare), Khói (Smoke particles), Hiệu ứng Glitch màn hình.
+Danh sách màn hình (`id`):
 
-Bảng Điều khiển Widget (HUD Dashboard): Tích hợp công cụ cho phép kéo thả các Widget hiển thị thông số thật của máy (Nhiệt độ Pin, RAM đang dùng, Dung lượng lưu trữ) lên hình nền, thiết kế theo dạng đồng hồ đo tốc độ (speedometer) của siêu xe hoặc thanh máu (HP bar) trong game.
+1. `screen-loading` — Boot/Loading
+2. `screen-home` — SYSTEM.ROOT (Trang chủ / thư viện theme)
+3. `screen-gallery` — THEME.PREVIEW (Feed cuộn ngang)
+4. `screen-garage` — Modding Garage (Workspace chỉnh sửa)
+5. `screen-zeroui-preview` — ZeroUI Preview (Xem trước toàn màn hình)
+6. `screen-library` — MY.STORAGE (Lưu trữ)
+7. `screen-lib-wall-detail` — Chi tiết wallpaper đã lưu
+8. `screen-lib-draft-detail` — Chi tiết bản nháp
+9. `screen-settings` — SYSTEM.CFG (Cài đặt)
+10. `screen-share` — NODE.SHARE (Chia sẻ)
 
-4. UX cho việc Kiếm tiền (Monetization UX)
+### Luồng chính (Core Flow)
 
-Minh bạch và Tự nguyện: * Tuyệt đối không dùng pop-up nhảy ra giữa màn hình.
+```
+LOADING → HOME → (chọn theme) → GALLERY/PREVIEW → GARAGE (mod)
+        → ZEROUI PREVIEW (xem trước) → APPLY (paywall) → SET WALLPAPER → LIBRARY
+```
 
-Các hiệu ứng cao cấp (Premium) được đánh dấu bằng icon Vương miện nhỏ màu vàng hoặc Biểu tượng Khóa.
+---
 
-Rewarded Ads tinh tế: Khi bấm vào hiệu ứng bị khóa, hiển thị một thông báo ngắn gọn, rõ ràng: "Unlock Pro Effect [Tên hiệu ứng]? Watch a 30s video or Upgrade to Pro." (Cung cấp 2 lựa chọn: Xem quảng cáo để mở khóa dùng 1 lần, hoặc Mua gói Pro).
+## 3. Đặc tả từng Màn hình
 
-Nhìn chung, giao diện cần toát lên sự mạnh mẽ, chuyên nghiệp và trao quyền kiểm soát tối đa cho người dùng.
+### 3.1 `screen-loading` — Boot Sequence
+- Tiêu đề glitch `SYSTEM.ROOT` (hiệu ứng `@keyframes glitch` lệch màu cyan/pink/yellow).
+- Thanh quét "matrix fluid scan" + dòng bitstream nhị phân random cập nhật mỗi 150ms.
+- 2 nút mock test mạng: `MẠNG: ON` / `MẠNG: OFF`.
+- Tự chuyển sang Home sau ~2.5s (nếu mạng ON).
+
+### 3.2 `screen-home` — SYSTEM.ROOT
+- **Header:** nút Folder (→ Library) | tiêu đề | nút Gear (→ Settings).
+- **Category scroll** (cuộn ngang): `ALL SYSTEM, JDM RACING, CYBERPUNK, SCI-FI HUD, HYPERCAR`. Tab active = nền vàng neon.
+- **Filter bar:** nút `MỤC YÊU THÍCH` (lọc favorite) + chỉ báo `SIM_NET: ONLINE/OFFLINE` (bấm để toggle mô phỏng mạng).
+- **Grid 2 cột** theme card: ảnh cover, nút tim (favorite toggle), badge `PREMIUM` nếu có.
+- Empty state: `NO CORE MATRIX FOUND`.
+
+### 3.3 `screen-gallery` — THEME.PREVIEW
+- **Feed cuộn ngang scroll-snap** (`feed-container`), card 280px, có:
+  - Card theme đã chọn.
+  - **Native Ad card** (`SPONSORED FEED AD` — ROG Ally) chèn vào feed.
+  - Các theme liên quan khác (bấm để đổi theme nền).
+- Header có nút `APPLY` (→ paywall premium / set wallpaper).
+- Action bar dưới: `CUSTOMIZE THEMING (MOD ENGINE)` → mở Garage.
+- Khi cuộn lúc offline → bật modal lỗi mạng.
+
+### 3.4 `screen-garage` — Modding Garage (Workspace)
+Trái tim của app — "trạm độ".
+
+- **Header:** Back (cảnh báo unsaved) | Undo + **Redo** + Preview (con mắt) | `APPLY` (rẽ nhánh Free/Premium).
+- **Workspace:** ảnh nền `#bg-target` + các sticker (`.canvas-sticker`) chồng lên.
+- **Tương tác sticker (đã code đầy đủ):**
+  - Kéo–thả (mouse `mousedown` + touch `touchstart`).
+  - **Phóng to/thu nhỏ:** cuộn chuột (`wheel`, bước 0.1) hoặc **pinch 2 ngón** (giới hạn scale 0.3–4.0).
+  - Chọn sticker → viền dashed cyan + nút xóa (X góc trên phải).
+  - Bấm nền trống → bỏ chọn.
+- **Sticker drawer** (pop-up grid 4 cột): chọn linh kiện/HUD/shape; 2 item gắn 👑 **Premium** (mở khóa qua ads → "Item Unlocked!").
+- **Toolbar dưới (4 công cụ):**
+  - `Rem BG` — AI xóa nền (**Premium** 👑: xem ads mở khóa → loading cloud → toast).
+  - `Thêm Chữ` — prompt nhập Sci-Fi text (màu vàng neon).
+  - `Sticker` — bật/tắt drawer.
+  - `Thêm Ảnh` — mock upload ảnh từ thiết bị.
+- **Đánh dấu Premium:** dùng tool/sticker khóa sẽ set cờ `usedPremiumInDesign` → ảnh hưởng nhánh Apply.
+- Overlay hướng dẫn: "Cuộn chuột hoặc Nhúm 2 ngón tay để Phóng to/Thu nhỏ linh kiện".
+
+### 3.5 `screen-zeroui-preview` — ZeroUI Preview
+- **Clone** toàn bộ workspace (ẩn nút xóa, viền chọn, overlay hướng dẫn) → xem thành phẩm sạch.
+- **Mock HUD overlay** mô phỏng màn hình điện thoại thật:
+  - Top: `NET.CRITICAL // 5G` + `BATTERY // 99%`.
+  - Đồng hồ lớn (Orbitron) + ngày `OCTOBER 24 // NEO-TOKYO`.
+- Nút `SWITCH DISPLAY MODE` đổi giữa **chế độ Đồng hồ** ↔ **lưới App icon** (Terminal/Proxy/Core.Mod/Nodes) — đúng tinh thần "ẩn toolbar để thấy rõ thành phẩm".
+- Nút X thoát về Garage.
+
+### 3.6 `screen-library` — MY.STORAGE
+- 2 tab: `TOPIC WALLPAPER` (đã deploy) | `DRAFTS` (bản nháp).
+- Grid 2 cột; bấm item → màn chi tiết tương ứng.
+- **Bulk select:** nút `SELECT` → bật chế độ chọn nhiều (checkbox) → thanh `DELETE SELECTED MATRIX` (destructive, màu pink).
+- Empty state: `STORAGE EMPTY`.
+- Tab wallpaper yêu cầu mạng (offline → modal lỗi).
+
+### 3.7 `screen-lib-wall-detail` / `screen-lib-draft-detail`
+- **Wall detail:** ảnh full + Back + Download (loading "EXPORTING..." → Toast "Image Saved to Device Gallery") + `RE-MODDING` (về Garage) + `APPLY MATRIX` (`applyFromLibrary` — **bỏ qua ads**, set context = library).
+- **Draft detail:** ảnh full + `CONTINUE MODDING` (về Garage tiếp tục chỉnh).
+
+### 3.8 `screen-settings` — SYSTEM.CFG
+Danh sách item dạng "terminal config":
+- `FEEDBACK TO TERMINAL`, `SHARE SECURE NODE` (→ Share), `RATE APP ON NET.STORE` (**→ Modal Rate App 5 sao**), `PRIVACY MATRIX POLICY`, `SYSTEM LANGUAGE` (VIETNAMESE), `CORE VERSION` (v1.0.0).
+
+### 3.9 `screen-share` — NODE.SHARE
+- **Ảnh wallpaper vừa tạo** (preview `#share-preview-img`) + nút chia sẻ Facebook / Instagram / TikTok (mock loading) + nút **COPY LINK** (→ Toast "Link Copied to Clipboard").
+- Back động (`handleShareBack`): về Settings hoặc về Garage tùy luồng đi vào.
+- Là điểm cuối của **Viral Loop** khi set wallpaper thành công từ Garage.
+
+---
+
+## 4. Hệ thống Modal & Phản hồi (Feedback System)
+
+| Modal / Overlay | Vai trò |
+|-----------------|---------|
+| `modal-global-loading` | Loading ngầm chuẩn (`showLoadingModal`) cho mọi tác vụ "nặng" (~1.5s) — thanh scan + text trạng thái |
+| `modal-network-error` | Lỗi mất kết nối (pink) — SETTINGS / RETRY / kích hoạt mạng. Có cơ chế **lưu & retry tác vụ bị gián đoạn** (`interruptedTask`) |
+| `modal-unsaved-changes` | Cảnh báo rời Garage chưa lưu — SAVE DRAFT / HỦY BỎ / KEEP EDITING |
+| `modal-video-paywall` | Paywall — đồng ý xem Reward Video Ad để mở khóa |
+| `modal-set-wallpaper` | Chọn phân vùng áp dụng — HOME / LOCK / BOTH; sau thành công điều hướng phân nhánh (garage→Share / gallery→Gallery / library→Library) |
+| `modal-rate-app` | Rate App 5 sao (`setRating`/`confirmRating`) → direct store |
+| `video-ads-overlay` | Màn hình quảng cáo giả lập đếm ngược 5s; mục đích `apply` hoặc `unlock` |
+| `cyber-toast` | **Toast pill chung** (`showToast`) — glow + haptic, tự ẩn ~2.5s; biến thể `pink`/`flash` |
+| `toast-network-status` | Toast `OFFLINE_MODE` (hiện ~2s) |
+
+---
+
+## 5. UX Cốt lõi (Core UX Patterns)
+
+- **Tối giản số chạm:** Home → chọn phôi → Garage (mod) → Preview → Apply → Set. Bỏ bước rườm rà; Preview ẩn toolbar.
+- **Trực tiếp & cơ học:** kéo–thả, pinch-zoom, scroll-scale cho cảm giác "độ" linh kiện như thật. Nút có phản hồi scale khi nhấn.
+- **An toàn dữ liệu:** chặn mất việc bằng modal Unsaved Changes; cho lưu Draft và tiếp tục sau.
+- **Bền với mạng yếu:** mọi tác vụ phụ thuộc mạng đều kiểm tra `checkNetworkStatus()`, lưu lại tác vụ để **RETRY** khi có mạng.
+
+---
+
+## 6. UX Kiếm tiền (Monetization UX)
+
+- **Minh bạch, không pop-up phá đám:** tác vụ premium chỉ bật paywall khi user chủ động bấm `APPLY`.
+- **Đánh dấu Premium:** badge `PREMIUM` (pink) trên card.
+- **Rewarded Ads tự nguyện:** modal đề nghị xem video (đồng ý / không), sau khi xem mới mở khóa Set Wallpaper.
+- **Native Ad** chèn khéo trong feed gallery (không che hành động chính).
+
+---
+
+## 7. State & Data (Mock)
+
+- `MOCK_THEMES` (6 theme: GTR, Neo-Tokyo, HUD Orbital, Lambo, NSX, Chiron) + `CATEGORIES`.
+- State runtime: `selectedCategory`, `favoriteFilterActive`, `selectedTheme`, `libraryActiveTab`, `bulkSelectMode`, `selectedLibraryItems`, `savedWallpapers`, `savedDrafts`, `undoStackStickers`, `redoStackStickers`, `isOnlineSimulation`, `interruptedTask`, `previewDisplayState`.
+- State premium/điều hướng mới: `usedPremiumInDesign`, `wallpaperSetContext`, `pendingPremiumUnlock`, `rewardVideoPurpose`, `shareBackContext`, `currentRating`.
+- Lưu trữ trong bộ nhớ JS (chưa persist) — reload là mất.
+
+---
+
+## 8. Khoảng cách so với Brief gốc (Gaps / Backlog)
+
+Những điểm brief ban đầu nêu nhưng **chưa có trong prototype** — đã thống nhất chuyển sang Roadmap Phase 2 (xem `prd.md` §9):
+
+1. ✅ **Haptic Feedback** — ĐÃ triển khai (`navigator.vibrate`).
+2. **Slider thông số** (cường độ sấm sét, tốc độ quạt, dải RGB): hiện thay bằng pinch/scroll scale sticker — chưa có slider hiệu ứng động.
+3. **Tùy biến mã màu HEX/RGB cho UI** & preset ROG Red / Razer Green: chưa có (đang cố định Cyberpunk Cyan/Pink/Yellow).
+4. **HUD Dashboard widget số liệu thật** (Nhiệt độ pin, RAM, dung lượng dạng speedometer/HP bar): mới có HUD tĩnh trong ZeroUI Preview.
+5. **Persist dữ liệu** (localStorage/back-end): chưa có.
+
+> Đề xuất ưu tiên (UX): (4) widget số liệu thật → khác biệt mạnh nhất với tệp gamer; (3) bộ chọn màu accent → tăng cảm giác "trao quyền"; (2) slider hiệu ứng động trong Garage để đúng tinh thần "độ".
