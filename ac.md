@@ -24,7 +24,7 @@ When: Người dùng nhấn nút "Apply" trên Nav bar.
 
 Then: Hệ thống hiển thị trực tiếp Modal Set Wallpaper (Không được hiển thị quảng cáo video). Sau khi chọn Home/Lock/Both, hệ thống hiện Modal Loading (Processing...) ngầm và áp dụng hình nền thành công.
 
-AC 3: Luồng Apply tại Screen 4 (Edit) — Phân nhánh Premium
+AC 3: Luồng Apply tại Screen 4 (Edit) — LUÔN xem Ads
 
 Scenario A: Phôi Free + chỉ dùng công cụ Free.
 
@@ -32,7 +32,9 @@ Given: Người dùng độ hình từ phôi Free và KHÔNG dùng phụ tùng/c
 
 When: Người dùng nhấn "Apply" trên Nav bar Screen 4.
 
-Then: Hệ thống bỏ qua Video Ads, mở thẳng Modal Set Wallpaper.
+Then: Hệ thống VẪN kích hoạt Modal Xem Video Quảng Cáo (không bỏ qua dù là phôi Free).
+- Nếu bấm "Không xem": tắt modal, giữ nguyên trạng thái, ở lại Screen 4.
+- Nếu bấm "Đồng ý xem": phát Reward Ads. Xem hết 100% → tự động gọi Modal Set Wallpaper.
 
 Scenario B: Phôi Premium HOẶC có dùng phụ tùng/công cụ Premium.
 
@@ -40,9 +42,10 @@ Given: Phôi gốc là Premium, hoặc người dùng đã dùng ít nhất mộ
 
 When: Người dùng nhấn "Apply".
 
-Then: Hệ thống kích hoạt Modal Xem Video Quảng Cáo.
+Then: Hành vi giống Scenario A — kích hoạt Modal Xem Video Quảng Cáo.
 - Nếu bấm "Không xem": tắt modal, giữ nguyên trạng thái, ở lại Screen 4.
 - Nếu bấm "Đồng ý xem": phát Reward Ads. Xem hết 100% → tự động gọi Modal Set Wallpaper.
+- Lưu ý: Reward Ads mở khóa item Premium (lúc chọn tool/sticker khóa) là một lượt riêng, độc lập với lượt Apply này.
 
 Scenario C (Điều hướng sau khi set thành công - Viral Loop):
 

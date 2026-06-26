@@ -36,7 +36,7 @@
 * **Luồng bấm Back (Nav bar):** Xuất hiện Modal Unsaved Changes với 3 lựa chọn (Save draft, Hủy bỏ, Keep edit).
 * **Luồng bấm Icon Premium (Tool):** Khi chọn vào phụ tùng/hiệu ứng có khóa -> Hiện Modal Xem Video Quảng Cáo để mở khóa dùng 1 lần -> Xem xong hiện Toast "Item Unlocked!".
 * **Luồng bấm nút Preview:** Chuyển sang Screen 5.
-* **Luồng bấm nút Apply [Logic Phân nhánh Premium]:** Nếu Phôi gốc là Premium HOẶC có sử dụng bất kỳ công cụ/phụ tùng Premium nào: Kích hoạt Modal Xem Video Quảng Cáo. Trái lại, nếu Phôi gốc Free VÀ chỉ dùng công cụ Free: Chuyển thẳng sang Modal Set Wallpaper.
+* **Luồng bấm nút Apply [LUÔN xem Ads]:** Tại Screen 4, mọi lần bấm Apply đều **bắt buộc** kích hoạt Modal Xem Video Quảng Cáo — không phân nhánh theo Free/Premium. Lý do: bản độ luôn được xem là "thành phẩm gia công" nên áp dụng đồng nhất 1 lượt Reward Ads. Xem xong mới gọi tiếp Modal Set Wallpaper. (Phôi gốc Premium / công cụ Premium vẫn dùng Reward Ads riêng để mở khóa item tại thời điểm chọn — xem mục Tool bên trên.)
 
 ---
 
@@ -84,7 +84,7 @@
 
 ### 1. Modal Xem Video Quảng Cáo (Reward Ads)
 
-* **Trạng thái kích hoạt:** Khi Apply Theme/Bản độ Premium, hoặc Mở khóa phụ tùng Premium.
+* **Trạng thái kích hoạt:** Khi Apply Theme Premium (Screen 3), **mọi lần Apply tại Screen 4 (không phân biệt Free/Premium)**, hoặc Mở khóa phụ tùng Premium.
 * **Nội dung:** Thông báo linh hoạt dựa trên ngữ cảnh. Mở khóa theme Screen 3: "Bạn cần xem một video quảng cáo ngắn để mở khóa giao diện Cao cấp này." Mở khóa item Screen 4: "Bản thiết kế của bạn có chứa các vật phẩm Cao cấp. Hãy xem một video quảng cáo để áp dụng chúng."
 * **Lựa chọn:** Bấm "Không xem" sẽ tắt modal, giữ nguyên trạng thái cũ. Bấm "Đồng ý xem" sẽ bật Modal Loading đệm, phát quảng cáo toàn màn hình, và gọi tiếp hành động chờ sau khi xem xong.
 

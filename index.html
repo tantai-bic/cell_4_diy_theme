@@ -377,6 +377,15 @@
             color: #fff;
             font-weight: bold;
         }
+        /* Theme bị khóa: huy hiệu ổ khóa (thay cho nhãn PREMIUM) */
+        .card-badge.lock-badge {
+            background: rgba(10, 12, 20, 0.85);
+            color: var(--neon-yellow);
+            border: 1px solid var(--neon-yellow);
+            font-size: 10px;
+            padding: 3px 6px;
+            text-shadow: 0 0 4px var(--neon-yellow);
+        }
 
         /* Screen 3: Template Gallery Feed */
         .feed-container {
@@ -528,6 +537,9 @@
             bottom: 65px;
             left: 0;
             width: 100%;
+            max-height: 45vh;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
             background: rgba(20, 22, 34, 0.95);
             border-top: 2px solid var(--neon-cyan);
             padding: 14px;
@@ -536,6 +548,8 @@
             gap: 12px;
             z-index: 30;
         }
+        .sticker-drawer::-webkit-scrollbar { width: 4px; }
+        .sticker-drawer::-webkit-scrollbar-thumb { background: var(--border-cyber); }
         .drawer-item {
             width: 100%;
             height: 70px;
@@ -969,7 +983,7 @@
             <div class="feed-container" id="gallery-feed-wrapper" onscroll="handleFeedScrollCheckOffline()"></div>
 
             <div class="feed-action-bar">
-                <button class="cyber-btn pink filled" style="width: 100%;" onclick="openModGarage()">
+                <button class="cyber-btn pink filled" style="width: 100%;" onclick="requestOpenModGarage()">
                     <i class="fa-solid fa-screwdriver-wrench"></i> CUSTOMIZE THEMING (MOD ENGINE)
                 </button>
             </div>
@@ -995,7 +1009,7 @@
 
             <div class="garage-tools-bar">
                 <button class="tool-btn" onclick="handleRemoveBgWithNetworkCheck()">
-                    <i class="fa-solid fa-crown premium-lock"></i>
+                    <i class="fa-solid fa-lock premium-lock"></i>
                     <i class="fa-solid fa-wand-magic-sparkles"></i><span>Rem BG</span>
                 </button>
                 <button class="tool-btn" onclick="addTextToCanvas()">
@@ -1414,48 +1428,48 @@
         ];
 
         const MOCK_STICKERS = [
-            { src: "assets/sticker/sticker_001_f5adb603e2504618bab3c9645ceea1fd.jpg", premium: false },
-            { src: "assets/sticker/sticker_002_e53a296bfa914366926454a46aaa9535.jpg", premium: false },
-            { src: "assets/sticker/sticker_003_cdcfcb56995a4aadbf8814a6eec62ca7.jpg", premium: true },
-            { src: "assets/sticker/sticker_004_983674737f6b43289c15786c0250161e.jpg", premium: false },
-            { src: "assets/sticker/sticker_005_cec3cdd668e140f6be95c856f0be4967.jpg", premium: false },
-            { src: "assets/sticker/sticker_006_dec0c03d37ea42d983a4759eff7f5618.jpg", premium: true },
+            { src: "assets/sticker/sticker_001_f5adb603e2504618bab3c9645ceea1fd.png", premium: false },
+            { src: "assets/sticker/sticker_002_e53a296bfa914366926454a46aaa9535.png", premium: false },
+            { src: "assets/sticker/sticker_003_cdcfcb56995a4aadbf8814a6eec62ca7.png", premium: true },
+            { src: "assets/sticker/sticker_004_983674737f6b43289c15786c0250161e.png", premium: false },
+            { src: "assets/sticker/sticker_005_cec3cdd668e140f6be95c856f0be4967.png", premium: false },
+            { src: "assets/sticker/sticker_006_dec0c03d37ea42d983a4759eff7f5618.png", premium: true },
             { src: "assets/sticker/sticker_007_dcdd07c29a194562aa27aae4d621b96c.png", premium: false },
             { src: "assets/sticker/sticker_008_31f8bf7c007a4f9fb794316cd3cc9c8c.png", premium: false },
-            { src: "assets/sticker/sticker_009_f06194bf8cf64dd192e76c20ab6fae8e.jpg", premium: true },
+            { src: "assets/sticker/sticker_009_f06194bf8cf64dd192e76c20ab6fae8e.png", premium: true },
             { src: "assets/sticker/sticker_010_15b46b91739d4ac38eb805c3e6e763e3.png", premium: false },
-            { src: "assets/sticker/sticker_011_d7dca5db1c1a4905b1efba28194dfbbe.jpg", premium: false },
-            { src: "assets/sticker/sticker_012_62293bbe9e5c4080a097ce4732571688.jpg", premium: true },
+            { src: "assets/sticker/sticker_011_d7dca5db1c1a4905b1efba28194dfbbe.png", premium: false },
+            { src: "assets/sticker/sticker_012_62293bbe9e5c4080a097ce4732571688.png", premium: true },
             { src: "assets/sticker/sticker_013_aa3ec3f17e514813b527ed2ec790f4c0.png", premium: false },
             { src: "assets/sticker/sticker_014_32152f9291c34288ac04e38bf4121200.png", premium: false },
             { src: "assets/sticker/sticker_015_5ac52034f6f4444f9dbd848203a46e95.png", premium: true },
-            { src: "assets/sticker/sticker_016_f2b5d4056f0748eca5252fff9129bc36.jpg", premium: false },
+            { src: "assets/sticker/sticker_016_f2b5d4056f0748eca5252fff9129bc36.png", premium: false },
             { src: "assets/sticker/sticker_017_b1103e29879c4c3b9e7500ac23ac307a.png", premium: false },
             { src: "assets/sticker/sticker_018_f81a44f717574e5aa4ee62f80332bd8e.png", premium: true },
             { src: "assets/sticker/sticker_019_8f8fdf3a031a4ba69198e7488ffb397b.png", premium: false },
-            { src: "assets/sticker/sticker_020_e9182cdbbebc44219bfc7b34b5c101ed.jpg", premium: false },
-            { src: "assets/sticker/sticker_021_cc5eb64ef455466bb1141113ef2456be.jpg", premium: true },
+            { src: "assets/sticker/sticker_020_e9182cdbbebc44219bfc7b34b5c101ed.png", premium: false },
+            { src: "assets/sticker/sticker_021_cc5eb64ef455466bb1141113ef2456be.png", premium: true },
             { src: "assets/sticker/sticker_022_aa5ef85f8f2b4938b9de131846c0050c.png", premium: false },
             { src: "assets/sticker/sticker_023_f50df81bb662477487203ca84f71f2eb.png", premium: false },
             { src: "assets/sticker/sticker_024_f587cd904a6645609c4c195bd0b09203.png", premium: true },
-            { src: "assets/sticker/sticker_025_5893447ee241449fad710ce901a5fcc7.jpg", premium: false },
-            { src: "assets/sticker/sticker_026_a0c5840f8d504647996ea1e164751722.jpg", premium: false },
+            { src: "assets/sticker/sticker_025_5893447ee241449fad710ce901a5fcc7.png", premium: false },
+            { src: "assets/sticker/sticker_026_a0c5840f8d504647996ea1e164751722.png", premium: false },
             { src: "assets/sticker/sticker_027_8a7ed6ebd2d44929a59a50ca63aac4e1.png", premium: true },
-            { src: "assets/sticker/sticker_028_1a1ee14da4304abb91e59bdee63c9fea.jpg", premium: false },
+            { src: "assets/sticker/sticker_028_1a1ee14da4304abb91e59bdee63c9fea.png", premium: false },
             { src: "assets/sticker/sticker_029_c0c2882cc57b436e85eaf408a3160d67.png", premium: false },
-            { src: "assets/sticker/sticker_030_cb71b55f2ec54b7a96d79611e6082a98.jpg", premium: true },
-            { src: "assets/sticker/sticker_031_22e048c295ed41cc92c703ae8a0c90bf.jpg", premium: false },
+            { src: "assets/sticker/sticker_030_cb71b55f2ec54b7a96d79611e6082a98.png", premium: true },
+            { src: "assets/sticker/sticker_031_22e048c295ed41cc92c703ae8a0c90bf.png", premium: false },
             { src: "assets/sticker/sticker_032_b44db17dc03d4737b2ab7c77c5275594.png", premium: false },
-            { src: "assets/sticker/sticker_033_d2b311fae6ac4e1dbc0ca5ea76ea4009.jpg", premium: true },
+            { src: "assets/sticker/sticker_033_d2b311fae6ac4e1dbc0ca5ea76ea4009.png", premium: true },
             { src: "assets/sticker/sticker_034_b77259cd745e4ebf889d4fd1ac42ca24.png", premium: false },
             { src: "assets/sticker/sticker_035_e4beb7651c954b16b771e8f7c104a235.png", premium: false },
             { src: "assets/sticker/sticker_036_b9aba85276e84a8aa2b8b2bf7d94e2ce.png", premium: true },
-            { src: "assets/sticker/sticker_037_a831120bfa574632812ae7304936898b.jpg", premium: false },
-            { src: "assets/sticker/sticker_038_a8b73d6b9b7d4e1aa50be519d57745f0.jpg", premium: false },
-            { src: "assets/sticker/sticker_039_ea1c9fbcebc2473b8336b605f8b51168.jpg", premium: true },
-            { src: "assets/sticker/sticker_040_01fee0d5ff604d88a5288e0a3e3307b7.jpg", premium: false },
+            { src: "assets/sticker/sticker_037_a831120bfa574632812ae7304936898b.png", premium: false },
+            { src: "assets/sticker/sticker_038_a8b73d6b9b7d4e1aa50be519d57745f0.png", premium: false },
+            { src: "assets/sticker/sticker_039_ea1c9fbcebc2473b8336b605f8b51168.png", premium: true },
+            { src: "assets/sticker/sticker_040_01fee0d5ff604d88a5288e0a3e3307b7.png", premium: false },
             { src: "assets/sticker/sticker_041_bee3904d43fc4c18a40ea6767f4608ce.png", premium: false },
-            { src: "assets/sticker/sticker_042_41e54e74f35448369ec09f7e318db4d4.jpg", premium: true },
+            { src: "assets/sticker/sticker_042_41e54e74f35448369ec09f7e318db4d4.png", premium: true },
             { src: "assets/sticker/sticker_043_1ef12fe04ca84fd2967bd0bf92cb922b.png", premium: false },
             { src: "assets/sticker/sticker_044_67bdcc446ead4aad87411f58cccbc489.jpg", premium: false },
         ];
@@ -1482,6 +1496,68 @@
         let wallpaperSetContext = 'gallery'; // 'garage' | 'gallery' | 'library'
         let pendingPremiumUnlock = null;   // hành động chờ sau khi xem ads mở khóa item
         let currentRating = 0;
+
+        // --- LOCK ENTITLEMENT (localStorage) ---
+        // "Lock" thay cho khái niệm "premium": item bị khóa -> xem 1 video để mở khóa vĩnh viễn.
+        const LS_UNLOCKED        = 'diy_unlocked_stickers'; // src sticker đã mở khóa
+        const LS_UNLOCKED_THEMES = 'diy_unlocked_themes';   // id theme đã mở khóa
+        const LS_PREMIUM         = 'diy_is_premium';         // cờ VIP toàn cục
+        let unlockedStickers = new Set();             // sticker đã unlock (per-item)
+        let unlockedThemes   = new Set();             // theme đã unlock (per-item, theo id)
+        let is_premium = false;                       // VIP user: true -> mở MỌI item bị khóa
+
+        function loadEntitlement() {
+            try {
+                unlockedStickers = new Set(JSON.parse(localStorage.getItem(LS_UNLOCKED) || '[]'));
+                unlockedThemes   = new Set(JSON.parse(localStorage.getItem(LS_UNLOCKED_THEMES) || '[]'));
+                is_premium = localStorage.getItem(LS_PREMIUM) === 'true';
+            } catch (e) {
+                unlockedStickers = new Set();
+                unlockedThemes = new Set();
+                is_premium = false;
+            }
+        }
+        function persistUnlockedStickers() {
+            try { localStorage.setItem(LS_UNLOCKED, JSON.stringify([...unlockedStickers])); } catch (e) {}
+        }
+        function persistUnlockedThemes() {
+            try { localStorage.setItem(LS_UNLOCKED_THEMES, JSON.stringify([...unlockedThemes])); } catch (e) {}
+        }
+        // VIP toàn cục mở hết; hoặc đã unlock lẻ
+        function isStickerUnlocked(src) { return is_premium || unlockedStickers.has(src); }
+        function isThemeUnlocked(id)     { return is_premium || unlockedThemes.has(id); }
+        // Ẩn/hiện icon lock trên các tool premium tĩnh (Rem BG) theo cờ VIP
+        function refreshToolLocks() {
+            document.querySelectorAll('.tool-btn .premium-lock').forEach(el => {
+                el.style.display = is_premium ? 'none' : '';
+            });
+        }
+        // Setter cờ VIP (gọi khi user nâng cấp/mua premium); persist để giữ qua phiên
+        function setPremiumUser(value) {
+            is_premium = !!value;
+            try { localStorage.setItem(LS_PREMIUM, is_premium ? 'true' : 'false'); } catch (e) {}
+            renderStickerDrawer(); // refresh khóa sticker
+            renderHomeGrid();      // refresh khóa theme
+            refreshToolLocks();
+        }
+        // Lưu 1 sticker vừa mở khóa qua ads + gỡ icon lock khỏi UI ngay
+        function unlockSticker(src) {
+            unlockedStickers.add(src);
+            persistUnlockedStickers();
+            const lock = document.querySelector(`.drawer-item[data-src="${CSS.escape(src)}"] .premium-lock`);
+            if (lock) lock.remove();
+        }
+        // Lưu 1 theme vừa mở khóa qua ads + gỡ huy hiệu lock trên mọi card đang hiển thị
+        function unlockTheme(id) {
+            unlockedThemes.add(id);
+            persistUnlockedThemes();
+            document.querySelectorAll(`[data-theme-id="${id}"] .lock-badge`).forEach(el => el.remove());
+        }
+        // HTML huy hiệu khóa cho 1 theme card (rỗng nếu free hoặc đã unlock/VIP)
+        function lockBadge(id, premium, extraStyle = '') {
+            if (!premium || isThemeUnlocked(id)) return '';
+            return `<span class="card-badge lock-badge" style="${extraStyle}"><i class="fa-solid fa-lock"></i></span>`;
+        }
 
         // --- TOAST PILL CHUNG (FRD) ---
         let toastTimer = null;
@@ -1570,7 +1646,7 @@
         }
 
         // --- LIFE CYCLE INIT ---
-        window.addEventListener('DOMContentLoaded', () => { executeLoadingSequence(); renderStickerDrawer(); });
+        window.addEventListener('DOMContentLoaded', () => { loadEntitlement(); executeLoadingSequence(); renderStickerDrawer(); refreshToolLocks(); });
 
         function executeLoadingSequence() {
             if (!checkNetworkStatus()) {
@@ -1641,11 +1717,11 @@
             }
 
             grid.innerHTML = filtered.map(theme => `
-                <div class="theme-card cyber-panel" onclick="clickThemeCard(${theme.id})">
+                <div class="theme-card cyber-panel" data-theme-id="${theme.id}" onclick="clickThemeCard(${theme.id})">
                     <button class="fav-btn ${theme.favorite ? 'active' : ''}" onclick="toggleFavoriteStatus(${theme.id}, event)">
                         <i class="fa-${theme.favorite ? 'solid' : 'regular'} fa-heart"></i>
                     </button>
-                    ${theme.premium ? `<span class="card-badge">PREMIUM</span>` : ''}
+                    ${lockBadge(theme.id, theme.premium)}
                     <img src="${theme.img}" alt="${theme.title}">
                     <div class="card-overlay">
                         <div class="card-title">${theme.title}</div>
@@ -1660,8 +1736,8 @@
             const feedWrapper = document.getElementById('gallery-feed-wrapper');
             
             let itemsHTML = `
-                <div class="feed-item cyber-panel">
-                    ${selectedTheme.premium ? `<span class="card-badge" style="z-index:5">PREMIUM</span>` : ''}
+                <div class="feed-item cyber-panel" data-theme-id="${selectedTheme.id}">
+                    ${lockBadge(selectedTheme.id, selectedTheme.premium, 'z-index:5')}
                     <img src="${selectedTheme.img}" alt="Selected Base">
                 </div>
             `;
@@ -1678,8 +1754,8 @@
             const relativeThemes = MOCK_THEMES.filter(t => t.id !== selectedTheme.id);
             relativeThemes.forEach(t => {
                 itemsHTML += `
-                    <div class="feed-item cyber-panel" onclick="selectDifferentThemeFromFeed(${t.id})">
-                        ${t.premium ? `<span class="card-badge" style="z-index:5">PREMIUM</span>` : ''}
+                    <div class="feed-item cyber-panel" data-theme-id="${t.id}" onclick="selectDifferentThemeFromFeed(${t.id})">
+                        ${lockBadge(t.id, t.premium, 'z-index:5')}
                         <img src="${t.img}">
                     </div>
                 `;
@@ -1702,6 +1778,18 @@
             openGalleryFeed();
         }
 
+        // Cổng vào Edit: theme khóa -> phải xem video mở khóa trước rồi mới vào Garage.
+        function requestOpenModGarage() {
+            if (selectedTheme.premium && !isThemeUnlocked(selectedTheme.id)) {
+                triggerPremiumUnlock(() => {
+                    unlockTheme(selectedTheme.id);
+                    openModGarage();
+                });
+            } else {
+                openModGarage();
+            }
+        }
+
         function openModGarage() {
             switchScreen('screen-garage');
             document.getElementById('bg-target').src = selectedTheme.img;
@@ -1717,12 +1805,14 @@
         function renderStickerDrawer() {
             const drawer = document.getElementById('sticker-drawer-pane');
             if (!drawer) return;
-            drawer.innerHTML = MOCK_STICKERS.map(s => `
-                <div class="drawer-item" onclick="requestSticker('${s.src}', ${s.premium})">
-                    ${s.premium ? `<i class="fa-solid fa-crown premium-lock"></i>` : ''}
+            drawer.innerHTML = MOCK_STICKERS.map(s => {
+                const locked = s.premium && !isStickerUnlocked(s.src);
+                return `
+                <div class="drawer-item" data-src="${s.src}" onclick="requestSticker('${s.src}', ${s.premium})">
+                    ${locked ? `<i class="fa-solid fa-lock premium-lock"></i>` : ''}
                     <img src="${s.src}" alt="Sticker">
-                </div>
-            `).join('');
+                </div>`;
+            }).join('');
         }
 
         function toggleStickerDrawer() {
@@ -1737,14 +1827,17 @@
             }
         }
 
-        // Gatekeeper: sticker premium -> xem ads mở khóa 1 lần (FRD Screen 4)
+        // Gatekeeper: sticker premium chưa unlock -> xem ads mở khóa 1 lần (FRD Screen 4)
+        // Đã unlock (lưu localStorage) hoặc user VIP (is_premium) -> dùng thẳng, không ads.
         function requestSticker(stickerSrc, isPremium) {
-            if (isPremium) {
+            if (isPremium && !isStickerUnlocked(stickerSrc)) {
                 triggerPremiumUnlock(() => {
+                    unlockSticker(stickerSrc);   // persist + gỡ icon lock
                     addStickerToCanvas(stickerSrc);
                     usedPremiumInDesign = true;
                 });
             } else {
+                if (isPremium) usedPremiumInDesign = true;
                 addStickerToCanvas(stickerSrc);
             }
         }
@@ -1794,13 +1887,16 @@
         }
 
         function handleRemoveBgWithNetworkCheck() {
-            // [FRD] Rem BG là công cụ Premium -> xem ads mở khóa 1 lần rồi mới xử lý
-            triggerPremiumUnlock(() => {
+            // [FRD] Rem BG là công cụ Premium -> xem ads mở khóa 1 lần rồi mới xử lý.
+            // User VIP (is_premium) bỏ qua ads, chạy thẳng.
+            const runRemoveBg = () => {
                 usedPremiumInDesign = true;
                 showLoadingModal("AI BACKGROUND REMOVAL MATRIX...", () => {
                     showToast("BACKGROUND MATRIX REMOVED");
                 });
-            });
+            };
+            if (is_premium) { runRemoveBg(); return; }
+            triggerPremiumUnlock(runRemoveBg);
         }
 
         function mockUploadUserImage() {
@@ -2089,14 +2185,22 @@
             rewardVideoPurpose = purpose;
             const body = document.getElementById('video-paywall-body');
             if (body) {
-                body.innerText = (purpose === 'unlock')
-                    ? "Bản thiết kế của bạn có chứa vật phẩm Cao cấp. Hãy xem một video quảng cáo để mở khóa và áp dụng chúng."
-                    : "Bạn cần xem một video quảng cáo ngắn để mở khóa giao diện Cao cấp này.";
+                if (purpose === 'unlock') {
+                    body.innerText = "Nội dung này đang bị khóa. Xem một video quảng cáo ngắn để mở khóa và sử dụng vĩnh viễn.";
+                } else if (wallpaperSetContext === 'garage') {
+                    // Apply tại Screen 4: luôn xem ads, không phân biệt Free/Premium
+                    body.innerText = "Xem một video quảng cáo ngắn để hoàn tất và áp dụng bản độ của bạn.";
+                } else {
+                    // Apply theme Premium tại Screen 3
+                    body.innerText = "Bạn cần xem một video quảng cáo ngắn để mở khóa giao diện Cao cấp này.";
+                }
             }
             openModal('modal-video-paywall');
         }
 
-        // Screen 3 (Preview): Free -> set thẳng | Premium -> xem ads trước
+        // Screen 3 (Preview) Apply:
+        // - Theme đang khóa -> xem video MỞ KHÓA (lưu vĩnh viễn) rồi mới Set Wallpaper.
+        // - Theme free HOẶC đã unlock/VIP -> Set Wallpaper thẳng, KHÔNG ads.
         function triggerApplyPremiumPaywall() {
             if (!checkNetworkStatus()) {
                 interruptedTask = triggerApplyPremiumPaywall;
@@ -2104,14 +2208,18 @@
                 return;
             }
             wallpaperSetContext = 'gallery';
-            if (selectedTheme.premium) {
-                openRewardModal('apply');
+            if (selectedTheme.premium && !isThemeUnlocked(selectedTheme.id)) {
+                // khóa -> mở khóa 1 lần bằng ads -> set wallpaper
+                triggerPremiumUnlock(() => {
+                    unlockTheme(selectedTheme.id);
+                    openModal('modal-set-wallpaper');
+                });
             } else {
                 openModal('modal-set-wallpaper');
             }
         }
 
-        // Screen 4 (Garage): phôi Premium HOẶC dùng tool/sticker Premium -> ads | còn lại set thẳng
+        // Screen 4 (Garage): LUÔN xem ads khi Apply (kể cả theme Free hoặc Premium)
         function triggerApplyPaywall() {
             if (!checkNetworkStatus()) {
                 interruptedTask = triggerApplyPaywall;
@@ -2119,11 +2227,7 @@
                 return;
             }
             wallpaperSetContext = 'garage';
-            if (selectedTheme.premium || usedPremiumInDesign) {
-                openRewardModal('apply');
-            } else {
-                openModal('modal-set-wallpaper');
-            }
+            openRewardModal('apply');
         }
 
         function startRewardVideoSequence() {

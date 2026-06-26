@@ -107,7 +107,7 @@ LOADING → HOME → (chọn theme) → GALLERY/PREVIEW → GARAGE (mod)
 ### 3.4 `screen-garage` — Modding Garage (Workspace)
 Trái tim của app — "trạm độ".
 
-- **Header:** Back (cảnh báo unsaved) | Undo + **Redo** + Preview (con mắt) | `APPLY` (rẽ nhánh Free/Premium).
+- **Header:** Back (cảnh báo unsaved) | Undo + **Redo** + Preview (con mắt) | `APPLY` (**luôn** xem Reward Ads, kể cả phôi Free).
 - **Workspace:** ảnh nền `#bg-target` + các sticker (`.canvas-sticker`) chồng lên.
 - **Tương tác sticker (đã code đầy đủ):**
   - Kéo–thả (mouse `mousedown` + touch `touchstart`).
@@ -120,7 +120,7 @@ Trái tim của app — "trạm độ".
   - `Thêm Chữ` — prompt nhập Sci-Fi text (màu vàng neon).
   - `Sticker` — bật/tắt drawer.
   - `Thêm Ảnh` — mock upload ảnh từ thiết bị.
-- **Đánh dấu Premium:** dùng tool/sticker khóa sẽ set cờ `usedPremiumInDesign` → ảnh hưởng nhánh Apply.
+- **Đánh dấu Premium:** dùng tool/sticker khóa sẽ set cờ `usedPremiumInDesign` (dùng cho mở khóa item; Apply tại S4 nay luôn xem ads nên không còn phân nhánh theo cờ này).
 - Overlay hướng dẫn: "Cuộn chuột hoặc Nhúm 2 ngón tay để Phóng to/Thu nhỏ linh kiện".
 
 ### 3.5 `screen-zeroui-preview` — ZeroUI Preview
@@ -180,7 +180,7 @@ Danh sách item dạng "terminal config":
 
 ## 6. UX Kiếm tiền (Monetization UX)
 
-- **Minh bạch, không pop-up phá đám:** tác vụ premium chỉ bật paywall khi user chủ động bấm `APPLY`.
+- **Minh bạch, không pop-up phá đám:** Reward Ads chỉ bật khi user chủ động bấm (mở khóa item Premium, hoặc bấm `APPLY`). Riêng `APPLY` tại Screen 4 **luôn** kèm 1 lượt ads (kể cả phôi Free) — vẫn do user chủ động, không phải pop-up tự nhảy.
 - **Đánh dấu Premium:** badge `PREMIUM` (pink) trên card.
 - **Rewarded Ads tự nguyện:** modal đề nghị xem video (đồng ý / không), sau khi xem mới mở khóa Set Wallpaper.
 - **Native Ad** chèn khéo trong feed gallery (không che hành động chính).
