@@ -1,0 +1,183 @@
+# ============================================================================
+# FAIL-FAST TRACKER  —  Nguồn chân lý chung cho NGƯỜI và AGENT
+# ============================================================================
+# Mục đích: theo dõi từng "ván cược" (1 app/feature MVP) đi qua 4 pha Fail-fast.
+# File này là YAML: người đọc như checklist, agent (BMAD) parse & cập nhật được.
+#
+# QUY ƯỚC ĐỌC/GHI (bắt buộc cho cả người lẫn agent):
+#   - Khóa (key) bằng tiếng Anh, nội dung mô tả bằng tiếng Việt.
+#   - CHỈ sửa giá trị field; KHÔNG đổi tên field (agent dựa vào schema này).
+#   - Mỗi lần đổi trạng thái -> thêm 1 dòng vào `decision_log` (ai, làm gì, vì sao).
+#   - Agent khi được giao việc: đọc `pipeline` -> tìm bet đúng `id` -> cập nhật
+#     `phase`, `status`, `metrics`, rồi ghi `decision_log`.
+#   - Template điền từng field (raw_idea, competitors, spec_input, metrics...):
+#     xem docs/fail-fast-user-guide.md (dùng chung cho người & agent).
+#
+# ----------------------------------------------------------------------------
+# ĐỊNH NGHĨA PHA (phase):
+#   P0-hunt      : Săn ý tưởng + Copy&Enhance đối thủ + chốt kill_criteria
+#   P1-spec      : Tech-Spec 1 trang (Barry *TS)
+#   P2-build     : Quick-Dev: code + test + self-check + adversarial review (Barry *QD)
+#   P3-measure   : Ship cho Publisher -> đo số liệu -> áp kill-gate
+#   archived     : Đã kết thúc (xem `decision`)
+#
+# ĐỊNH NGHĨA TRẠNG THÁI (status):
+#   backlog      : Mới ghi nhận, chưa làm
+#   active       : Đang làm ở pha hiện tại
+#   blocked      : Đang kẹt (ghi lý do ở `notes`)
+#   shipped      : Đã giao Publisher, đang chờ số liệu
+#   decided      : Đã ra quyết định giữ/giết (xem `decision`)
+#
+# ĐỊNH NGHĨA QUYẾT ĐỊNH (decision) — chỉ set ở P3:
+#   pending      : Chưa đủ số liệu để quyết
+#   keep         : Đạt ngưỡng -> đầu tư tiếp
+#   kill         : Không đạt -> khai tử, rút bài học
+#
+# ⚠️ KHÁC BMAD sprint-status: file này CÓ mốc thời gian (window) — vì kill-gate
+#    của Fail-fast bắt buộc gắn hạn ("sau 3 ngày"). Đây là cố ý.
+# ============================================================================
+
+meta:
+  generated: 2026-06-26
+  studio: "Studio 6 người — mô hình IAA / Publisher"
+  owner_roles: ["dev", "pm", "analyst", "ux", "tea"]   # vai trò agent BMAD liên quan
+  default_kill_window_days: 3
+
+# Ngưỡng GIẾT mặc định của studio (mỗi bet có thể override trong kill_criteria).
+# Đây là "công tắc khai tử" — thiếu nó thì chỉ Fast chứ không Fail được.
+default_kill_criteria:
+  d1_retention_min: 0.20          # < 20% giữ chân ngày 1 -> ứng viên bị giết
+  ecpm_usd_min: 2.0               # eCPM dưới ngưỡng -> không đủ nuôi UA
+  crash_free_min: 0.99            # < 99% crash-free -> Publisher loại
+  evaluate_after_days: 3          # đo trong cửa sổ này rồi mới quyết
+
+# STACK CHUẨN CỦA STUDIO — chốt 1 LẦN, mọi bet tái dùng (vũ khí Base Code).
+# Winston (architect) đề xuất + người duyệt; KHÔNG để mỗi bet chọn lại framework.
+studio_stack:
+  decided: true                   # true = đã chốt (Winston đề xuất, người duyệt 2026-06-26)
+  platform_default: "mobile-cross" # 1 codebase iOS+Android; SHIP ANDROID TRƯỚC, iOS bật sau
+  framework: "Flutter"            # canvas/drag-drop mạnh, set-wallpaper native, SDK ads đầy đủ
+  language: "Dart"                # đi kèm Flutter
+  ad_network: "AppLovin MAX (mediation hub) — waterfall + in-app bidding qua AdMob/Meta/Unity/ironSource"
+  notes: "Quyết 1 lần; override per-bet chỉ khi thật cần (ghi lý do ở bet.platform). Lý do ad_network: 'không bỏ sót ads' = bài toán mediation/bidding nhiều network cạnh tranh từng impression, không phải 1 network đơn lẻ. Prototype web chỉ để test UI/flow — KHÔNG web-wrap lên production (eCPM WebView thấp + cần native set-wallpaper); vào P2-build dựng lại flow bằng Flutter."
+
+# ----------------------------------------------------------------------------
+# PIPELINE — danh sách các ván cược. Thêm bet mới bằng cách copy 1 block.
+# ----------------------------------------------------------------------------
+pipeline:
+
+  - id: bet-001
+    title: "DIY-WALLPAPER — chế hình nền + sticker, IAA reward ads"
+    phase: P2-build              # P1 chốt 2026-06-26 (PO duyệt tech-spec) -> vào build
+    status: active
+    owners: ["dev:Amelia"]
+    platform:
+      target: "mobile-android"     # loại app đích của bet này
+      current_form: "web-prototype-validated" # index.html đã validate UI/flow; production = Flutter
+      rationale: "Đối thủ đều trên Play Store; tệp Gamer Android. Web prototype xong vai trò -> port Flutter."
+      stack_override: ""           # rỗng = theo studio_stack (Flutter)
+    raw_idea:
+      summary: "App chế hình nền + dán sticker, kiếm tiền bằng reward ads"
+      audience: "Game thủ / dân thích custom màn hình điện thoại"
+      win_reason: "Luồng 'độ' (mod) mượt + lock/unlock bằng ads, kích thích khoe thành quả"
+      iaa_type: "reward, native"
+    competitors:
+      - name: "DIY Wallpaper Maker Collage"
+        store_url: "https://play.google.com/store/apps/details?id=com.diy.wallpaper.maker.collage"
+        main_flow: "Chọn mẫu/Nhập ảnh -> Chỉnh sửa (Frame/Background) -> Lưu/Áp dụng làm hình nền."
+        ad_points: "Banner đặt ở dưới đáy màn hình che khuất công cụ chỉnh sửa; Pop-up xuất hiện khi chọn mẫu."
+        edge: "App của họ lạm dụng banner che mất nút thao tác, gây ức chế cực lớn. Mình hơn ở trải nghiệm Zero UI (ẩn toàn bộ giao diện khi preview) và đưa quảng cáo Native hòa trộn vào thư viện dạng thẻ Cyber-card, không cản trở khu vực thao tác (Workspace)."
+      - name: "DIY Wallpaper Maker & Collage"
+        store_url: "https://play.google.com/store/apps/details?id=com.emojitoapps.world"
+        main_flow: "Chọn tính năng (DIY/Live Drawing/AI Emoji) -> Tùy chỉnh -> Trả phí Premium (bắt buộc) -> Áp dụng."
+        ad_points: "Pop-up mỗi khi click; ép xem quảng cáo nhưng đến bước cuối vẫn yêu cầu mua Premium mới cho lưu."
+        edge: "Họ lừa dối người dùng (quảng cáo free nhưng ép trả phí ở bước cuối) và hay bị văng app (crash). Mình hơn ở sự minh bạch: gắn nhãn khóa (Lock icon) ngay từ đầu, cho phép mở khóa bằng Rewarded Ad (Xem video nhận thưởng) để trao đổi giá trị công bằng với người dùng."
+      - name: "Colliz - DIY Wallpaper Craft"
+        store_url: "https://play.google.com/store/apps/details?id=com.yoursify.diy.wallpaper.collage.craft.cutout.photo"
+        main_flow: "Mở app -> Chọn mẫu/Freestyle -> Kéo thả Sticker/Text -> Lưu."
+        ad_points: "Quảng cáo xuất hiện ngay khi vừa mở app (App Open Ads) và lặp lại liên tục cứ vài giây một lần."
+        edge: "Họ spam quảng cáo quá đà làm hỏng tỷ lệ giữ chân (Retention) và có phong cách đại trà (bánh bèo/cute). Mình hơn ở định vị ngách độc tôn (Cyberpunk/JDM/Gamer) và có nhịp độ quảng cáo hợp lý, tôn trọng trải nghiệm người dùng."
+      - name: "DIY Wallpaper - Collage Maker"
+        store_url: "https://play.google.com/store/apps/details?id=app.diy.wallpaper.collage.craft.photocollage.collagemaker.wallpaper3d.parallax"
+        main_flow: "Chọn danh mục (3D/Parallax/Collage) -> Chỉnh sửa (đổi nền/add layer) -> Set Home Screen / Lock Screen."
+        ad_points: "Quảng cáo Interstitial (chuyển tiếp toàn màn hình) khi chuyển đổi giữa các tính năng và khi bấm Apply."
+        edge: "Họ bị lỗi kỹ thuật nặng (cài hình nền chính đè luôn màn hình khóa, hay tự restart app). Mình hơn ở cấu trúc source code cực nhẹ (chỉ dùng ảnh 2D tĩnh/chèn layer giả lập HUD) giúp app mượt mà, không ngốn RAM hay hao pin, đáp ứng đúng tiêu chuẩn khắt khe của tệp Gamer."
+    source: "Tham khảo app wallpaper/sticker editor top store"
+    hook: "Lock/unlock bằng reward ads + luồng độ (mod) kích thích khoe thành quả"
+    spec_input:                   # P1 chốt từ tech-spec (Barry *TS)
+      must_have: "Port full 10 screen + 8 modal + toast/haptic 1:1; AppLovin MAX Rewarded (apply S4 luôn ads / apply premium S3 / unlock item S4) + Native (feed S3); persist entitlement (shared_preferences) + library/draft (Hive); canvas editor (drag/pinch 0.3-4.0/undo-redo); set wallpaper Android HOME/LOCK/BOTH + Viral Loop; bundle 169 theme + 44 sticker."
+      out_of_scope: "iOS release (codebase sẵn, ship sau); Interstitial/App-open/Banner; IAP/Premium mua; Sliders RGB/VFX động/HUD số liệu thật/custom HEX/đa ngôn ngữ runtime (Roadmap P2)."
+      tech_constraints: "crash-free >=99% (Murat gate, không skip); Android minSdk 24; mọi điểm ads qua 1 AdService (preload/retry/backoff/log) = 'không bỏ sót ads' bằng mediation, không nhồi format; source nhẹ 2D tĩnh."
+      reuse_from_base: "index.html (hành vi 1:1), frd/ac/uxui/design/prd (SoT), output/sticker (đã tách nền), tools/bg-remover (build-time)."
+      assets_api: "AppLovin MAX SDK key + ad units (Rewarded, Native) + bật mediation AdMob/Meta/Unity/ironSource; cloud Remove BG API key; packages: applovin_max, riverpod, go_router, shared_preferences, hive, async_wallpaper, image_picker, share_plus, in_app_review, connectivity_plus."
+    kill_criteria:                # override hoặc để trống = dùng default
+      d1_retention_min: 0.25
+      ecpm_usd_min: 2.5
+      crash_free_min: 0.99
+      evaluate_after_days: 3
+    metrics:                      # agent/người cập nhật sau khi ship
+      d1_retention: null
+      ecpm_usd: null
+      crash_free: null
+      measured_on: null
+    decision: pending
+    artifacts:
+      tech_spec: "_bmad-output/implementation-artifacts/tech-spec-diy-wallpaper-flutter.md"  # P1 done (Barry *TS), PO duyệt 2026-06-26
+      repo: "."
+      prototype: "index.html"     # bản mẫu web đã chạy — nguồn context cho port
+      tracking_dashboard: null    # link analytics/IAA (ngoài BMAD)
+    tasks:                        # checklist thô của bet (người + agent cùng tick)
+      # --- Web prototype (đã validate UI/flow + logic monetization) ---
+      - "[x] (proto) Tách nền sticker hàng loạt (tools/bg-remover)"
+      - "[x] (proto) Lock/unlock sticker + theme, lưu localStorage"
+      - "[x] (proto) Apply Screen 4 luôn ads; Screen 3 free sau unlock"
+      # --- Production Flutter (P1 -> P2) ---
+      - "[x] P1: Tech-spec port web->Flutter (Barry *TS) — 8 EPIC/~30 task + 14 AC, PO duyệt"
+      - "[ ] P2: Dựng app Flutter theo tech-spec"
+      - "[ ] P2: Nhúng AppLovin MAX (reward + native) + tracking"
+      - "[ ] P2: Murat test crash-free luồng gọi ads"
+    notes: "Web prototype (index.html) đã validate flow + cơ chế lock/unlock & ads. studio_stack chốt Flutter. P1 hoàn tất: tech-spec port web->Flutter đã PO duyệt (cổng #8). OPEN ISSUE loading wordmark đã chốt: hiển thị tên app 'DIY WALLPAPER' (giữ glitch). Sẵn sàng *QD ở fresh context. KHÔNG web-wrap lên production."
+
+  # --- MẪU BET MỚI (copy block dưới, đổi id) -------------------------------
+  - id: bet-002
+    title: "<Tên app/feature kế tiếp>"
+    phase: P0-hunt
+    status: backlog
+    owners: ["analyst:Mary"]
+    platform:                     # loại app đích (mặc định theo studio_stack)
+      target: ""                  # mobile-android | mobile-ios | mobile-cross | web | desktop
+      current_form: ""
+      rationale: ""
+      stack_override: ""          # rỗng = theo studio_stack
+    raw_idea:                     # P0 việc 1 (xem fail-fast-user-guide.md)
+      summary: ""
+      audience: ""
+      win_reason: ""
+      iaa_type: ""
+    competitors: []              # P0 việc 2: list {name, store_url, main_flow, ad_points, edge}
+    source: "<3-5 app đối thủ đã bóc flow>"
+    hook: "<1 góc cải tiến: rút từ competitors[].edge>"
+    spec_input: {}               # P1 việc 6: {must_have, out_of_scope, tech_constraints, reuse_from_base, assets_api}
+    kill_criteria: {}             # rỗng = dùng default_kill_criteria
+    metrics:
+      d1_retention: null
+      ecpm_usd: null
+      crash_free: null
+      measured_on: null
+    decision: pending
+    artifacts:
+      tech_spec: null
+      repo: null
+      tracking_dashboard: null
+    tasks: []
+    notes: ""
+
+# ----------------------------------------------------------------------------
+# DECISION LOG — nhật ký bất biến. Mỗi thay đổi pha/quyết định = 1 dòng mới.
+# Format: { date, bet, by, action, why }
+# ----------------------------------------------------------------------------
+decision_log:
+  - { date: 2026-06-26, bet: bet-001, by: "BMad Master", action: "Khởi tạo tracker, đặt bet-001 ở P2-build", why: "Ghi nhận hiện trạng dự án DIY-WALLPAPER" }
+  - { date: 2026-06-26, bet: studio_stack, by: "Winston (architect)", action: "Chốt studio_stack: mobile-cross / Flutter / Dart / AppLovin MAX; decided=true", why: "Người duyệt. Cross-platform để ship Android trước + iOS sau không viết lại; AppLovin MAX mediation tối ưu fill-rate đáp ứng yêu cầu 'không bỏ sót ads'." }
+  - { date: 2026-06-26, bet: bet-001, by: "Barry (quick-flow-solo-dev)", action: "P1-spec -> P2-build. Sinh tech-spec port web->Flutter (8 EPIC/~30 task + 14 AC), fill spec_input, gắn artifacts.tech_spec.", why: "PO duyệt tech-spec (cổng #8 playbook). Chốt OPEN ISSUE: loading wordmark hiển thị tên app 'DIY WALLPAPER' (giữ glitch). Sẵn sàng *QD." }
+  - { date: 2026-06-26, bet: bet-001, by: "BMad Master", action: "Chuyển P2-build -> P1-spec; đánh dấu index.html là prototype đã validate", why: "studio_stack chốt Flutter; bản web không web-wrap lên production -> cần tech-spec port web->Flutter trước khi build thật." }
