@@ -6,3 +6,8 @@
 # OS / editor
 .DS_Store
 Thumbs.db
+
+# Node / build
+node_modules/
+output/
+.claude/hooks/.hook-spans-pending

@@ -1,8 +1,0 @@
-bmad-workflows-check-setup	inject	682		missing=2	1782382733178139000	1782382733430993800	0
-enforce-bmad-config-priority	inject	1		overrides=1 consumer_bmad=yes	1782382760611514100	1782382760850697000	0
-enforce-bmad-output-consistency	skip	0			1782382760631174700	1782382760836898200	0
-enforce-bmad-output-consistency	skip	0			1782382791613235000	1782382791802546000	0
-enforce-bmad-config-priority	inject	1		overrides=1 consumer_bmad=yes	1782382791590000600	1782382791819924900	0
-enforce-bmad-output-consistency	skip	0			1782382827200902600	1782382827387005900	0
-enforce-bmad-config-priority	inject	1		overrides=1 consumer_bmad=yes	1782382827177468100	1782382827404262300	0
-enforce-bmad-agent-scope	skip	0		no_active_agent	1782382924800243400	1782382925174905100	0
