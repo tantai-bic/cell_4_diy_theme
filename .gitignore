@@ -1,13 +1,76 @@
+# Flutter / Dart
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+build/
+diy_wallpaper/
+*.g.dart
+*.freezed.dart
+doc/api/
+coverage/
+*.lcov
+
+# Android generated
+android/.gradle/
+android/.kotlin/
+android/build/
+android/app/build/
+android/app/.cxx/
+android/local.properties
+android/key.properties
+android/app/debug/
+android/app/release/
+android/app/profile/
+android/captures/
+android/.idea/
+android/*.iml
+android/gradle/wrapper/gradle-wrapper.jar
+android/**/GeneratedPluginRegistrant.java
+android/**/GeneratedPluginRegistrant.kt
+*.apk
+*.aab
+*.keystore
+*.jks
+
+# iOS generated
+ios/.symlinks/
+ios/Pods/
+ios/Podfile.lock
+ios/Flutter/Generated.xcconfig
+ios/Flutter/flutter_export_environment.sh
+ios/Flutter/App.framework
+ios/Flutter/Flutter.framework
+ios/Flutter/Flutter.podspec
+ios/Runner.xcworkspace/
+
+# Web generated
+web/flutter_service_worker.js
+web/version.json
+
 # Secrets / local env
 .env
 .env.local
 *.local
+google-services.json
+android/app/google-services.json
 
 # OS / editor
 .DS_Store
 Thumbs.db
 
+# Local project config (không push)
+.claude/settings.local.json
+
+# BMAD generated output
+_bmad-output/
+
+# Web build artifact ở root
+index.html
+
 # Node / build
 node_modules/
 output/
 .claude/hooks/.hook-spans-pending
+# Added by code-review-graph
+.code-review-graph/

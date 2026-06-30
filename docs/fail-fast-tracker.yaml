@@ -133,9 +133,9 @@ pipeline:
       - "[x] (proto) Apply Screen 4 luôn ads; Screen 3 free sau unlock"
       # --- Production Flutter (P1 -> P2) ---
       - "[x] P1: Tech-spec port web->Flutter (Barry *TS) — 8 EPIC/~30 task + 14 AC, PO duyệt"
-      - "[ ] P2: Dựng app Flutter theo tech-spec"
-      - "[ ] P2: Nhúng AppLovin MAX (reward + native) + tracking"
-      - "[ ] P2: Murat test crash-free luồng gọi ads"
+      - "[x] P2: Dựng app Flutter theo tech-spec (diy_wallpaper/ — 8 EPIC hoàn tất source code)"
+      - "[x] P2: Nhúng AppLovin MAX (reward + native) AdService 1 điểm + retry/backoff"
+      - "[ ] P2: Murat test crash-free luồng gọi ads (cần thiết bị + Flutter SDK)"
     notes: "Web prototype (index.html) đã validate flow + cơ chế lock/unlock & ads. studio_stack chốt Flutter. P1 hoàn tất: tech-spec port web->Flutter đã PO duyệt (cổng #8). OPEN ISSUE loading wordmark đã chốt: hiển thị tên app 'DIY WALLPAPER' (giữ glitch). Sẵn sàng *QD ở fresh context. KHÔNG web-wrap lên production."
 
   # --- MẪU BET MỚI (copy block dưới, đổi id) -------------------------------
@@ -181,3 +181,4 @@ decision_log:
   - { date: 2026-06-26, bet: studio_stack, by: "Winston (architect)", action: "Chốt studio_stack: mobile-cross / Flutter / Dart / AppLovin MAX; decided=true", why: "Người duyệt. Cross-platform để ship Android trước + iOS sau không viết lại; AppLovin MAX mediation tối ưu fill-rate đáp ứng yêu cầu 'không bỏ sót ads'." }
   - { date: 2026-06-26, bet: bet-001, by: "Barry (quick-flow-solo-dev)", action: "P1-spec -> P2-build. Sinh tech-spec port web->Flutter (8 EPIC/~30 task + 14 AC), fill spec_input, gắn artifacts.tech_spec.", why: "PO duyệt tech-spec (cổng #8 playbook). Chốt OPEN ISSUE: loading wordmark hiển thị tên app 'DIY WALLPAPER' (giữ glitch). Sẵn sàng *QD." }
   - { date: 2026-06-26, bet: bet-001, by: "BMad Master", action: "Chuyển P2-build -> P1-spec; đánh dấu index.html là prototype đã validate", why: "studio_stack chốt Flutter; bản web không web-wrap lên production -> cần tech-spec port web->Flutter trước khi build thật." }
+  - { date: 2026-06-29, bet: bet-001, by: "Barry (quick-flow-solo-dev)", action: "P2-build: Sinh toàn bộ Flutter source code — 8 EPIC hoàn tất (A-H). diy_wallpaper/ có: pubspec.yaml, main.dart, 10 screens, AdService (Rewarded+retry/backoff), Riverpod providers, go_router, Hive, unit tests (entitlement/undo-redo/apply-branch/scale). BLOCKER: cần mortal cài Flutter SDK + điền AppLovin keys trước khi build.", why: "Flutter SDK không có trên máy dev; source code đầy đủ, chờ runtime environment." }
