@@ -38,21 +38,25 @@ class LibraryNotifier extends AsyncNotifier<LibraryState> {
       );
 
   Future<void> saveWallpaper(LibraryWallpaper wall) async {
+    await future; // đảm bảo build() xong trước khi dùng _wallpaperBox
     await _wallpaperBox.add(wall);
     state = AsyncData(_load());
   }
 
   Future<void> saveDraft(LibraryDraft draft) async {
+    await future; // đảm bảo build() xong trước khi dùng _draftBox
     await _draftBox.add(draft);
     state = AsyncData(_load());
   }
 
   Future<void> deleteWallpapers(List<int> keys) async {
+    await future;
     await _wallpaperBox.deleteAll(keys);
     state = AsyncData(_load());
   }
 
   Future<void> deleteDrafts(List<int> keys) async {
+    await future;
     await _draftBox.deleteAll(keys);
     state = AsyncData(_load());
   }

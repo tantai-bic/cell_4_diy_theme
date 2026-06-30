@@ -19,7 +19,10 @@ import '../../providers/entitlement_provider.dart';
 import '../../providers/library_provider.dart';
 import '../../core/models/theme_item.dart' show LibraryDraft;
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../core/constants/analytics_events.dart';
 import '../../core/services/ad_service.dart';
+import '../../core/l10n/locale_provider.dart';
+import '../../core/services/analytics_service.dart';
 import '../../router/app_router.dart';
 import 'reward_modal.dart';
 import 'set_wallpaper_modal.dart';
@@ -47,16 +50,20 @@ class _GarageScreenState extends ConsumerState<GarageScreen> {
   bool _drawerOpen = false;
 
   final GlobalKey _canvasKey = GlobalKey();
+  late DateTime _editStartTime;
 
   @override
   void initState() {
     super.initState();
-    // Load sticker layers từ draft (nếu mở từ library)
+    _editStartTime = DateTime.now();
     if (widget.args.initialStickers.isNotEmpty) {
       _stickers = List.from(widget.args.initialStickers);
     }
-    // Preload ad ngay khi vào Screen 4 — sẵn sàng khi user bấm Apply
     adService.preloadRewarded();
+    analyticsService.logEditorOpened(
+      themeId: widget.themeId.toString(),
+      source: widget.args.fromLibrary ? 'library' : 'gallery',
+    );
   }
 
   /// Capture canvas (background + stickers) thành file PNG tạm.
@@ -91,11 +98,16 @@ class _GarageScreenState extends ConsumerState<GarageScreen> {
       _redoStack.clear();
       _stickers = [..._stickers, s];
     });
+    analyticsService.logStickerAddedToCanvas(
+      stickerId: s.src,
+      themeId: widget.themeId.toString(),
+      canvasStickerCount: _stickers.length,
+    );
   }
 
   void _undo() {
     if (_undoStack.isEmpty) {
-      CyberToast.show(context, 'NOTHING TO UNDO');
+      CyberToast.show(context, ref.read(stringsProvider).nothingToUndo);
       return;
     }
     setState(() {
@@ -107,7 +119,7 @@ class _GarageScreenState extends ConsumerState<GarageScreen> {
 
   void _redo() {
     if (_redoStack.isEmpty) {
-      CyberToast.show(context, 'NOTHING TO REDO');
+      CyberToast.show(context, ref.read(stringsProvider).nothingToRedo);
       return;
     }
     setState(() {
@@ -138,7 +150,7 @@ class _GarageScreenState extends ConsumerState<GarageScreen> {
       builder: (_) => _UnsavedChangesModal(
         onSaveDraft: () async {
           // LoadingModal đè lên dialog — canvas vẫn trong tree nên vẫn capture được
-          LoadingModal.show(context, message: 'SAVING...');
+          LoadingModal.show(context, messageBuilder: (s) => s.saving);
 
           final snapshotPath = await _captureCanvas();
           final stickerLayersJson =
@@ -170,15 +182,19 @@ class _GarageScreenState extends ConsumerState<GarageScreen> {
 
   Future<void> _handleApply() async {
     final theme = kThemes.firstWhere((t) => t.id == widget.themeId, orElse: () => kThemes.first);
-    final entitlement = ref.read(entitlementProvider).valueOrNull;
+    // Dùng .future để đảm bảo entitlement đã load xong (tránh race condition khi
+    // app restart từ MIUI → valueOrNull có thể null dù user có premium)
+    final entitlement = await ref.read(entitlementProvider.future);
+
+    if (!mounted) return;
 
     // User premium → apply thẳng, không cần xem ads
-    if (entitlement?.isPremium == true) {
+    if (entitlement.isPremium) {
       await _doApply(theme);
       return;
     }
 
-    // Mọi trường hợp còn lại: S4 bắt buộc xem ads trước khi apply
+    // Mọi trường hợp còn lại: bắt buộc xem ads trước khi apply
     await RewardModal.show(
       context,
       rewardContext: RewardContext.applyS4,
@@ -198,7 +214,7 @@ class _GarageScreenState extends ConsumerState<GarageScreen> {
     if (target == null || !mounted) return;
 
     // Capture + prefs + set đều trong loading phase
-    LoadingModal.show(context, message: 'SYSTEM APPLYING...');
+    LoadingModal.show(context, messageBuilder: (s) => s.systemApplying);
 
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt('pending_garage_theme_id', widget.themeId);
@@ -215,8 +231,23 @@ class _GarageScreenState extends ConsumerState<GarageScreen> {
 
     if (ok) {
       HapticFeedback.heavyImpact();
-      CyberToast.show(context, 'WALLPAPER SET!', haptic: false);
+      CyberToast.show(context, ref.read(stringsProvider).wallpaperSet, haptic: false);
+      final editDurationSec = DateTime.now().difference(_editStartTime).inSeconds;
       final stickerLayersJson = _stickers.map((s) => jsonEncode(s.toJson())).toList();
+      analyticsService.logWallpaperExported(
+        themeId: widget.themeId.toString(),
+        stickerCount: _stickers.length,
+        editDurationSec: editDurationSec,
+        exportType: AnalyticsValue.save,
+      );
+      analyticsService.logWallpaperSetAs(
+        themeId: widget.themeId.toString(),
+        target: switch (target) {
+          WallpaperTarget.home => AnalyticsValue.homeScreen,
+          WallpaperTarget.lock => AnalyticsValue.lockScreen,
+          WallpaperTarget.both => AnalyticsValue.both,
+        },
+      );
       // Reset state — modal vẫn đang hiển thị, user không thấy garage trống
       setState(() {
         _stickers = [];
@@ -240,7 +271,7 @@ class _GarageScreenState extends ConsumerState<GarageScreen> {
       ));
     } else {
       LoadingModal.hide();
-      CyberToast.show(context, 'SET FAILED. TRY AGAIN.', variant: ToastVariant.pink);
+      CyberToast.show(context, ref.read(stringsProvider).wallpaperSetFailed, variant: ToastVariant.pink);
       await prefs.remove('pending_share_image');
       await prefs.remove('pending_garage_theme_id');
       await prefs.remove('pending_garage_stickers');
@@ -282,7 +313,7 @@ class _GarageScreenState extends ConsumerState<GarageScreen> {
                 onToggleDrawer: () => setState(() => _drawerOpen = !_drawerOpen),
                 onPreview: () => context.pushNamed('preview', extra: PreviewArgs(
                   backgroundImg: theme.img,
-                  stickerPaths: _stickers.map((s) => s.src).toList(),
+                  stickerLayers: List.unmodifiable(_stickers),
                 )),
                 onApply: _handleApply,
                 drawerOpen: _drawerOpen,
@@ -306,12 +337,17 @@ class _GarageScreenState extends ConsumerState<GarageScreen> {
                   onStickerSelected: (i) => setState(() => _selectedStickerIndex = i),
                   onDeselect: () => setState(() => _selectedStickerIndex = null),
                   onStickerRemoved: (i) {
+                    final removed = _stickers[i];
                     setState(() {
                       _undoStack.add(List.from(_stickers));
                       _redoStack.clear();
                       _stickers.removeAt(i);
                       _selectedStickerIndex = null;
                     });
+                    analyticsService.logStickerRemoved(
+                      stickerId: removed.src,
+                      themeId: widget.themeId.toString(),
+                    );
                   },
                 ),
                 ), // RepaintBoundary
@@ -332,7 +368,7 @@ class _GarageScreenState extends ConsumerState<GarageScreen> {
                           onRewarded: () async {
                             await ref.read(entitlementProvider.notifier).unlockSticker(id);
                             _addSticker(StickerLayer(src: src));
-                            CyberToast.show(context, 'STICKER UNLOCKED!', variant: ToastVariant.flash);
+                            CyberToast.show(context, ref.read(stringsProvider).stickerUnlocked, variant: ToastVariant.flash);
                           },
                         );
                         return;
@@ -351,7 +387,7 @@ class _GarageScreenState extends ConsumerState<GarageScreen> {
 
 enum _UnsavedAction { saveDraft, discard, keep }
 
-class _GarageToolbar extends StatelessWidget {
+class _GarageToolbar extends ConsumerWidget {
   final VoidCallback onBack, onUndo, onRedo, onToggleDrawer, onPreview, onApply;
   final bool drawerOpen;
 
@@ -366,7 +402,7 @@ class _GarageToolbar extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Container(
       height: 52,
       color: AppColors.bgCyber,
@@ -390,9 +426,9 @@ class _GarageToolbar extends StatelessWidget {
                 color: AppColors.neonCyan,
                 boxShadow: AppTheme.cyanGlow,
               ),
-              child: const Text(
-                'APPLY',
-                style: TextStyle(
+              child: Text(
+                ref.watch(stringsProvider).applyButton,
+                style: const TextStyle(
                   color: AppColors.bgAmoled,
                   fontFamily: 'Orbitron',
                   fontSize: 12,
@@ -432,15 +468,15 @@ class _GarageCanvas extends StatefulWidget {
 }
 
 class _GarageCanvasState extends State<_GarageCanvas> {
-  double? _liveX, _liveY, _liveScale;
+  double? _liveX, _liveY, _liveScale, _liveRotation;
   double _baseScale = 1.0;
+  double _baseRotation = 0.0;
 
   @override
   void didUpdateWidget(_GarageCanvas old) {
     super.didUpdateWidget(old);
-    // Reset live khi chuyển sang sticker khác
     if (old.selectedIndex != widget.selectedIndex) {
-      _liveX = _liveY = _liveScale = null;
+      _liveX = _liveY = _liveScale = _liveRotation = null;
     }
   }
 
@@ -448,9 +484,11 @@ class _GarageCanvasState extends State<_GarageCanvas> {
     if (widget.selectedIndex == null) return;
     final s = widget.stickers[widget.selectedIndex!];
     _baseScale = s.scale;
+    _baseRotation = s.rotation;
     _liveX = s.x;
     _liveY = s.y;
     _liveScale = s.scale;
+    _liveRotation = s.rotation;
   }
 
   void _scaleUpdate(ScaleUpdateDetails d) {
@@ -460,6 +498,7 @@ class _GarageCanvasState extends State<_GarageCanvas> {
       _liveY = _liveY! + d.focalPointDelta.dy;
       if (d.pointerCount >= 2) {
         _liveScale = (_baseScale * d.scale).clamp(0.3, 4.0);
+        _liveRotation = _baseRotation + d.rotation;
       }
     });
   }
@@ -469,9 +508,29 @@ class _GarageCanvasState extends State<_GarageCanvas> {
     final i = widget.selectedIndex!;
     widget.onStickerMoved(
       i,
-      widget.stickers[i].copyWith(x: _liveX!, y: _liveY!, scale: _liveScale!),
+      widget.stickers[i].copyWith(
+        x: _liveX!,
+        y: _liveY!,
+        scale: _liveScale!,
+        rotation: _liveRotation!,
+      ),
     );
-    setState(() => _liveX = _liveY = _liveScale = null);
+    setState(() => _liveX = _liveY = _liveScale = _liveRotation = null);
+  }
+
+  void _onHandleRotateDelta(int i, double delta) {
+    setState(() {
+      _liveRotation = (_liveRotation ?? widget.stickers[i].rotation) + delta;
+    });
+  }
+
+  void _onHandleRotateEnd(int i) {
+    if (_liveRotation == null) return;
+    widget.onStickerMoved(
+      i,
+      widget.stickers[i].copyWith(rotation: _liveRotation!),
+    );
+    setState(() => _liveRotation = null);
   }
 
   @override
@@ -479,26 +538,27 @@ class _GarageCanvasState extends State<_GarageCanvas> {
     return Stack(
       fit: StackFit.expand,
       children: [
-        // Background — tap để deselect
         GestureDetector(
           onTap: widget.onDeselect,
           child: Image.asset(widget.backgroundImg, fit: BoxFit.cover),
         ),
-        // Sticker visuals (chỉ tap để chọn, gesture do canvas xử lý)
         ...List.generate(widget.stickers.length, (i) {
           final s = widget.stickers[i];
           final selected = widget.selectedIndex == i;
           return _StickerVisual(
+            key: ValueKey('sticker_$i'),
             layer: s,
             selected: selected,
             displayX: selected && _liveX != null ? _liveX! : s.x,
             displayY: selected && _liveY != null ? _liveY! : s.y,
             displayScale: selected && _liveScale != null ? _liveScale! : s.scale,
+            displayRotation: selected && _liveRotation != null ? _liveRotation! : s.rotation,
             onTap: () => widget.onStickerSelected(i),
             onRemove: () => widget.onStickerRemoved(i),
+            onRotateDelta: (delta) => _onHandleRotateDelta(i, delta),
+            onRotateEnd: () => _onHandleRotateEnd(i),
           );
         }),
-        // Full-screen gesture overlay — translucent để tap sticker/X button vẫn được
         if (widget.selectedIndex != null)
           GestureDetector(
             behavior: HitTestBehavior.translucent,
@@ -511,74 +571,145 @@ class _GarageCanvasState extends State<_GarageCanvas> {
   }
 }
 
-// Sticker chỉ render, không tự xử lý gesture scale/pan
-class _StickerVisual extends StatelessWidget {
+// Sticker render + rotate handle. Scale/pan gesture handled by canvas overlay.
+class _StickerVisual extends StatefulWidget {
   final StickerLayer layer;
   final bool selected;
-  final double displayX, displayY, displayScale;
+  final double displayX, displayY, displayScale, displayRotation;
   final VoidCallback onTap, onRemove;
+  final void Function(double delta) onRotateDelta;
+  final VoidCallback onRotateEnd;
 
   const _StickerVisual({
+    super.key,
     required this.layer,
     required this.selected,
     required this.displayX,
     required this.displayY,
     required this.displayScale,
+    required this.displayRotation,
     required this.onTap,
     required this.onRemove,
+    required this.onRotateDelta,
+    required this.onRotateEnd,
   });
 
+  @override
+  State<_StickerVisual> createState() => _StickerVisualState();
+}
+
+class _StickerVisualState extends State<_StickerVisual> {
   static const double _base = 100.0;
-  static const double _xBtnSize = 24.0;
-  static const double _xBtnOffset = 12.0;
+  static const double _handleSize = 22.0;
+  static const double _pad = 11.0; // half handle size, used as padding
+
+  final _imageKey = GlobalKey();
+  Offset? _lastHandlePos;
+
+  Offset _getImageCenter() {
+    final box = _imageKey.currentContext?.findRenderObject() as RenderBox?;
+    if (box == null) return Offset.zero;
+    return box.localToGlobal(Offset(box.size.width / 2, box.size.height / 2));
+  }
+
+  void _onRotateStart(DragStartDetails d) {
+    _lastHandlePos = d.globalPosition;
+  }
+
+  void _onRotateUpdate(DragUpdateDetails d) {
+    if (_lastHandlePos == null) return;
+    final center = _getImageCenter();
+    final prev = _lastHandlePos! - center;
+    final curr = d.globalPosition - center;
+    final delta = curr.direction - prev.direction;
+    widget.onRotateDelta(delta);
+    _lastHandlePos = d.globalPosition;
+  }
+
+  void _onRotateEnd(DragEndDetails d) {
+    _lastHandlePos = null;
+    widget.onRotateEnd();
+  }
 
   @override
   Widget build(BuildContext context) {
-    final size = _base * displayScale;
+    final size = _base * widget.displayScale;
+
     return Positioned(
-      left: displayX - _xBtnOffset,
-      top: displayY - _xBtnOffset,
-      child: SizedBox(
-        width: size + _xBtnOffset * 2,
-        height: size + _xBtnOffset * 2,
-        child: Stack(
-          children: [
-            Positioned(
-              left: _xBtnOffset,
-              top: _xBtnOffset,
-              child: GestureDetector(
-                onTap: onTap,
-                child: Container(
-                  width: size,
-                  height: size,
-                  decoration: selected
-                      ? BoxDecoration(
-                          border: Border.all(color: AppColors.neonCyan, width: 1.5),
-                        )
-                      : null,
-                  child: Image.asset(layer.src, fit: BoxFit.cover),
-                ),
-              ),
-            ),
-            if (selected)
+      left: widget.displayX - _pad,
+      top: widget.displayY - _pad,
+      // Rotate the ENTIRE box (image + handles) around its center
+      child: Transform.rotate(
+        angle: widget.displayRotation,
+        child: SizedBox(
+          width: size + _pad * 2,
+          height: size + _pad * 2,
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              // Sticker image
               Positioned(
-                top: 0,
-                right: 0,
+                left: _pad,
+                top: _pad,
                 child: GestureDetector(
-                  onTap: onRemove,
-                  behavior: HitTestBehavior.opaque,
+                  onTap: widget.onTap,
                   child: Container(
-                    width: _xBtnSize,
-                    height: _xBtnSize,
-                    decoration: const BoxDecoration(
-                      color: AppColors.neonPink,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(Icons.close, color: Colors.white, size: 14),
+                    key: _imageKey,
+                    width: size,
+                    height: size,
+                    decoration: widget.selected
+                        ? BoxDecoration(
+                            border: Border.all(color: AppColors.neonCyan, width: 1.5),
+                          )
+                        : null,
+                    child: Image.asset(widget.layer.src, fit: BoxFit.cover),
                   ),
                 ),
               ),
-          ],
+
+              // Remove button — top-right corner
+              if (widget.selected)
+                Positioned(
+                  top: 0,
+                  right: 0,
+                  child: GestureDetector(
+                    onTap: widget.onRemove,
+                    behavior: HitTestBehavior.opaque,
+                    child: Container(
+                      width: _handleSize,
+                      height: _handleSize,
+                      decoration: const BoxDecoration(
+                        color: AppColors.neonPink,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.close, color: Colors.white, size: 13),
+                    ),
+                  ),
+                ),
+
+              // Rotate handle — bottom-right corner (drag to rotate)
+              if (widget.selected)
+                Positioned(
+                  bottom: 0,
+                  right: 0,
+                  child: GestureDetector(
+                    onPanStart: _onRotateStart,
+                    onPanUpdate: _onRotateUpdate,
+                    onPanEnd: _onRotateEnd,
+                    behavior: HitTestBehavior.opaque,
+                    child: Container(
+                      width: _handleSize,
+                      height: _handleSize,
+                      decoration: const BoxDecoration(
+                        color: AppColors.neonCyan,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.rotate_right, color: Colors.black, size: 13),
+                    ),
+                  ),
+                ),
+            ],
+          ),
         ),
       ),
     );
@@ -631,7 +762,7 @@ class _StickerDrawer extends StatelessWidget {
   }
 }
 
-class _UnsavedChangesModal extends StatelessWidget {
+class _UnsavedChangesModal extends ConsumerWidget {
   final VoidCallback onSaveDraft, onDiscard, onKeep;
 
   const _UnsavedChangesModal({
@@ -641,7 +772,8 @@ class _UnsavedChangesModal extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final s = ref.watch(stringsProvider);
     return PopScope(
       canPop: false,
       child: Dialog(
@@ -653,17 +785,17 @@ class _UnsavedChangesModal extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Text(
-                'UNSAVED CHANGES',
-                style: TextStyle(color: AppColors.neonYellow, fontFamily: 'Orbitron', fontSize: 14, fontWeight: FontWeight.bold),
+              Text(
+                s.unsavedChanges,
+                style: const TextStyle(color: AppColors.neonYellow, fontFamily: 'Orbitron', fontSize: 14, fontWeight: FontWeight.bold),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 20),
-              CyberButton(label: 'SAVE DRAFT', fullWidth: true, onTap: onSaveDraft),
+              CyberButton(label: s.saveDraft, fullWidth: true, onTap: onSaveDraft),
               const SizedBox(height: 10),
-              CyberButton(label: 'HỦY THAY ĐỔI', variant: CyberButtonVariant.danger, fullWidth: true, onTap: onDiscard),
+              CyberButton(label: s.discardChanges, variant: CyberButtonVariant.danger, fullWidth: true, onTap: onDiscard),
               const SizedBox(height: 10),
-              CyberButton(label: 'TIẾP TỤC CHỈNH SỬA', variant: CyberButtonVariant.ghost, fullWidth: true, onTap: onKeep),
+              CyberButton(label: s.continueEditing, variant: CyberButtonVariant.ghost, fullWidth: true, onTap: onKeep),
             ],
           ),
         ),

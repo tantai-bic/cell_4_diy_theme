@@ -76,9 +76,13 @@ class _CyberButtonState extends State<CyberButton> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   if (widget.icon != null) ...[widget.icon!, const SizedBox(width: 8)],
-                  Text(
-                    widget.label,
-                    style: Theme.of(context).textTheme.labelLarge?.copyWith(color: _textColor),
+                  Flexible(
+                    child: Text(
+                      widget.label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.labelLarge?.copyWith(color: _textColor),
+                    ),
                   ),
                 ],
               ),

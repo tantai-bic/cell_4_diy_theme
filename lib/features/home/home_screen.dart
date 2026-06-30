@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../core/l10n/locale_provider.dart';
 import '../../core/models/app_data.dart';
 import '../../core/models/theme_item.dart';
+import '../../core/services/analytics_service.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/widgets/cyber_toast.dart';
 import '../../providers/entitlement_provider.dart';
@@ -26,7 +28,7 @@ class HomeScreen extends ConsumerWidget {
             _CategoryScroll(selectedCat: selectedCat, favActive: favActive, ref: ref),
             Expanded(
               child: filteredThemes.isEmpty
-                  ? _EmptyState(favActive: favActive)
+                  ? _EmptyState(favActive: favActive, s: ref.watch(stringsProvider))
                   : _ThemeGrid(themes: filteredThemes),
             ),
           ],
@@ -91,7 +93,7 @@ class _CategoryScroll extends StatelessWidget {
           // Fav filter chip
           _chip(
             context,
-            label: '❤ YÊU THÍCH',
+            label: ref.watch(stringsProvider).favorites,
             active: favActive,
             onTap: () {
                 if (!favActive) {
@@ -162,21 +164,31 @@ class _ThemeGrid extends ConsumerWidget {
         childAspectRatio: 9 / 16,
       ),
       itemCount: themes.length,
-      itemBuilder: (_, i) => _ThemeCard(theme: themes[i]),
+      itemBuilder: (_, i) => _ThemeCard(theme: themes[i], index: i),
     );
   }
 }
 
 class _ThemeCard extends ConsumerWidget {
   final ThemeItem theme;
-  const _ThemeCard({required this.theme});
+  final int index;
+  const _ThemeCard({required this.theme, required this.index});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final entitlement = ref.watch(entitlementProvider).valueOrNull;
     final isLocked = theme.isPremium && !(entitlement?.isThemeUnlocked(theme.id) ?? false);
     return GestureDetector(
-      onTap: () => context.pushNamed('gallery', pathParameters: {'themeId': theme.id.toString()}),
+      onTap: () {
+        analyticsService.logThemeCardClicked(
+          themeId: theme.id.toString(),
+          themeName: theme.title,
+          isPremium: theme.isPremium,
+          positionIndex: index,
+          category: theme.category,
+        );
+        context.pushNamed('gallery', pathParameters: {'themeId': theme.id.toString()});
+      },
       child: Stack(
         fit: StackFit.expand,
         children: [
@@ -223,10 +235,11 @@ class _ThemeCard extends ConsumerWidget {
             right: 6,
             child: GestureDetector(
               onTap: () {
+                final s = ref.read(stringsProvider);
                 ref.read(themeStateProvider.notifier).toggleFavorite(theme.id);
                 CyberToast.show(
                   context,
-                  theme.isFavorite ? 'REMOVED FROM FAVORITES' : 'ADDED TO FAVORITES',
+                  theme.isFavorite ? s.removedFromFavorites : s.addedToFavorites,
                   variant: theme.isFavorite ? ToastVariant.normal : ToastVariant.pink,
                 );
               },
@@ -245,7 +258,8 @@ class _ThemeCard extends ConsumerWidget {
 
 class _EmptyState extends StatelessWidget {
   final bool favActive;
-  const _EmptyState({required this.favActive});
+  final dynamic s;
+  const _EmptyState({required this.favActive, required this.s});
 
   @override
   Widget build(BuildContext context) {
@@ -256,7 +270,7 @@ class _EmptyState extends StatelessWidget {
           const Icon(Icons.search_off, color: AppColors.textMuted, size: 48),
           const SizedBox(height: 16),
           Text(
-            favActive ? 'CHƯA CÓ YÊU THÍCH' : 'KHÔNG TÌM THẤY',
+            favActive ? s.noFavorites : s.noResults,
             style: const TextStyle(
               color: AppColors.textMuted,
               fontFamily: 'Orbitron',

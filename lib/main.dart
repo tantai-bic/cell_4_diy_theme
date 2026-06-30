@@ -1,7 +1,10 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'core/l10n/locale_provider.dart';
 import 'core/models/theme_item.dart';
 import 'core/services/ad_service.dart';
 import 'core/theme/app_theme.dart';
@@ -9,6 +12,7 @@ import 'router/app_router.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
 
   // Full screen / immersive
   SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
@@ -31,16 +35,24 @@ void main() async {
   runApp(const ProviderScope(child: DiyWallpaperApp()));
 }
 
-class DiyWallpaperApp extends StatelessWidget {
+class DiyWallpaperApp extends ConsumerWidget {
   const DiyWallpaperApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final locale = ref.watch(localeProvider);
     return MaterialApp.router(
       title: 'DIY Wallpaper',
       theme: AppTheme.dark,
       routerConfig: appRouter,
       debugShowCheckedModeBanner: false,
+      locale: locale,
+      supportedLocales: const [Locale('en'), Locale('vi')],
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
     );
   }
 }

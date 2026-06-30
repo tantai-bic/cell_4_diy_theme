@@ -11,6 +11,9 @@ import '../../core/theme/widgets/cyber_toast.dart';
 import '../../providers/entitlement_provider.dart';
 import '../../providers/network_provider.dart';
 import '../../providers/theme_state_provider.dart';
+import '../../core/constants/analytics_events.dart';
+import '../../core/l10n/locale_provider.dart';
+import '../../core/services/analytics_service.dart';
 import '../../core/services/network_guard.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../garage/reward_modal.dart';
@@ -111,11 +114,15 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
     final feedPage = _feed.indexWhere((item) => item?.id == widget.initialThemeId);
     final startPage = feedPage >= 0 ? feedPage : _currentIndex;
     _pageCtrl = PageController(initialPage: startPage);
-    // Preload ad slots gần vị trí bắt đầu ngay từ initState
-    // để AdWidget PlatformView kịp khởi tạo trước khi user swipe tới
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _preloadAhead(startPage);
     });
+    analyticsService.logThemePreviewOpened(
+      themeId: widget.initialThemeId.toString(),
+      isPremium: _themes.isNotEmpty &&
+          _themes[_currentIndex.clamp(0, _themes.length - 1)].isPremium,
+      source: selectedCat == 'ALL SYSTEM' ? 'home' : selectedCat.toLowerCase(),
+    );
   }
 
   @override
@@ -142,8 +149,8 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
   }
 
   Future<void> _handleApply() async {
-    final entitlement = ref.read(entitlementProvider).valueOrNull;
-    if (entitlement == null) return;
+    final entitlement = await ref.read(entitlementProvider.future);
+    if (!mounted) return;
 
     final theme = _current;
     final prefs = await SharedPreferences.getInstance();
@@ -154,13 +161,15 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
       await prefs.setInt('pending_gallery_theme_id', theme.id);
 
       bool _applied = false;
-      await SetWallpaperModal.show(context,
+      await SetWallpaperModal.showLocalized(context, ref.read(stringsProvider),
           imagePath: theme.img,
           onSuccess: () {
             _applied = true;
-            // setWallpaper() đã hoàn thành — xóa flag ngay, ở lại gallery.
-            // Không show overlay vì sẽ block back button.
             prefs.remove('pending_gallery_theme_id');
+            analyticsService.logWallpaperSetAs(
+              themeId: theme.id.toString(),
+              target: AnalyticsValue.homeScreen,
+            );
           });
 
       // User cancel hoặc set thất bại → xóa flag
@@ -173,6 +182,8 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
       await RewardModal.show(
         context,
         rewardContext: RewardContext.unlockTheme,
+        itemId: theme.id.toString(),
+        itemName: theme.title,
         onRewarded: () async {
           await ref.read(entitlementProvider.notifier).unlockTheme(theme.id);
           if (mounted) await _doApply();
@@ -185,9 +196,10 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
 
   Future<void> _handleEnterGarage() async {
     final theme = _current;
-    final entitlement = ref.read(entitlementProvider).valueOrNull;
+    final entitlement = await ref.read(entitlementProvider.future);
+    if (!mounted) return;
 
-    if (theme.isPremium && !(entitlement?.isThemeUnlocked(theme.id) ?? false)) {
+    if (theme.isPremium && !entitlement.isThemeUnlocked(theme.id)) {
       await RewardModal.show(
         context,
         rewardContext: RewardContext.unlockTheme,
@@ -219,14 +231,14 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
         children: [
           // Empty state khi không có theme yêu thích
           if (_themes.isEmpty)
-            const Center(
+            Center(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.favorite_border, color: AppColors.neonPink, size: 48),
-                  SizedBox(height: 16),
-                  Text('CHƯA CÓ YÊU THÍCH',
-                      style: TextStyle(color: AppColors.textMuted, fontFamily: 'Orbitron', fontSize: 13)),
+                  const Icon(Icons.favorite_border, color: AppColors.neonPink, size: 48),
+                  const SizedBox(height: 16),
+                  Consumer(builder: (_, r, __) => Text(r.watch(stringsProvider).noFavorites,
+                      style: const TextStyle(color: AppColors.textMuted, fontFamily: 'Orbitron', fontSize: 13))),
                 ],
               ),
             ),
@@ -265,7 +277,9 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
                   child: Row(
                     children: [
                       GestureDetector(
-                        onTap: () => context.pop(),
+                        onTap: () {
+                          context.pop();
+                        },
                         child: const Icon(Icons.arrow_back_ios, color: AppColors.neonCyan),
                       ),
                       const Spacer(),
@@ -289,8 +303,9 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
                           return GestureDetector(
                             onTap: () {
                               ref.read(themeStateProvider.notifier).toggleFavorite(theme.id);
+                              final s = ref.read(stringsProvider);
                               CyberToast.show(context,
-                                  t.isFavorite ? 'REMOVED' : 'ADDED TO FAVORITES');
+                                  t.isFavorite ? s.removedFromFavorites : s.addedToFavorites);
                             },
                             child: Icon(
                               t.isFavorite ? Icons.favorite : Icons.favorite_border,
@@ -322,22 +337,26 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
               child: Row(
                 children: [
                   Expanded(
-                    child: CyberButton(
-                      label: (theme.isPremium && !(entitlementState?.isThemeUnlocked(theme.id) ?? false))
-                          ? '🔒 GARAGE'
-                          : 'VÀO GARAGE',
-                      variant: CyberButtonVariant.secondary,
-                      onTap: _handleEnterGarage,
-                    ),
+                    child: Consumer(builder: (_, r, __) {
+                      final s = r.watch(stringsProvider);
+                      final locked = theme.isPremium && !(entitlementState?.isThemeUnlocked(theme.id) ?? false);
+                      return CyberButton(
+                        label: locked ? s.lockedGarage : s.enterGarage,
+                        variant: CyberButtonVariant.secondary,
+                        onTap: _handleEnterGarage,
+                      );
+                    }),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: CyberButton(
-                      label: (theme.isPremium && !(entitlementState?.isThemeUnlocked(theme.id) ?? false))
-                          ? '🔒 ÁP DỤNG'
-                          : 'ÁP DỤNG',
-                      onTap: _handleApply,
-                    ),
+                    child: Consumer(builder: (_, r, __) {
+                      final s = r.watch(stringsProvider);
+                      final locked = theme.isPremium && !(entitlementState?.isThemeUnlocked(theme.id) ?? false);
+                      return CyberButton(
+                        label: locked ? s.lockedApply : s.applyLabel,
+                        onTap: _handleApply,
+                      );
+                    }),
                   ),
                 ],
               ),
