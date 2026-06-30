@@ -1,9 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
-// DEV: Google test IDs — swap to real AppLovin IDs when shipping
-const String _kRewardedAdUnitId = 'ca-app-pub-3940256099942544/5224354917';
+import '../config/app_config.dart';
 
 const String _kAdsEnabledKey = 'ads_enabled';
 
@@ -60,7 +58,7 @@ class AdService {
     if (!_initialized || !_adsEnabled || _rewardedAd != null || _loading) return;
     _loading = true;
     RewardedAd.load(
-      adUnitId: _kRewardedAdUnitId,
+      adUnitId: AppConfig.rewardedAdUnitId,
       request: const AdRequest(),
       rewardedAdLoadCallback: RewardedAdLoadCallback(
         onAdLoaded: (ad) {
@@ -129,7 +127,8 @@ class AdService {
     });
   }
 
-  static const String nativeAdUnitId = 'ca-app-pub-3940256099942544/2247696110';
+  static String get nativeAdUnitId => AppConfig.nativeAdUnitId;
+  static String get bannerAdUnitId => AppConfig.bannerAdUnitId;
 }
 
 final adService = AdService();

@@ -7,6 +7,7 @@ import '../../core/l10n/locale_provider.dart';
 import '../../core/models/app_data.dart';
 import '../../core/models/theme_item.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/theme/widgets/banner_ad_widget.dart';
 import '../../core/theme/widgets/cyber_button.dart';
 import '../../providers/library_provider.dart';
 import '../../router/app_router.dart';
@@ -49,23 +50,30 @@ class DraftDetailScreen extends ConsumerWidget {
           ),
         ),
       ),
-      // Button căn giữa bottom bar, có SafeArea cho home indicator
+      // Button + Banner luôn dưới cùng
       bottomNavigationBar: SafeArea(
-        child: Container(
-          color: AppColors.bgCyber,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-          child: CyberButton(
-            label: ref.watch(stringsProvider).continueMod,
-            fullWidth: true,
-            onTap: () => context.pushNamed(
-              'garage',
-              pathParameters: {'themeId': theme.id.toString()},
-              extra: GarageArgs(
-                fromLibrary: true,
-                initialStickers: stickerLayers,
+        top: false,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              color: AppColors.bgCyber,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              child: CyberButton(
+                label: ref.watch(stringsProvider).continueMod,
+                fullWidth: true,
+                onTap: () => context.pushNamed(
+                  'garage',
+                  pathParameters: {'themeId': theme.id.toString()},
+                  extra: GarageArgs(
+                    fromLibrary: true,
+                    initialStickers: stickerLayers,
+                  ),
+                ),
               ),
             ),
-          ),
+            const BannerAdWidget(),
+          ],
         ),
       ),
       body: SizedBox.expand(

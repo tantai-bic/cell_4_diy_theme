@@ -14,8 +14,9 @@ import '../../providers/theme_state_provider.dart';
 import '../../core/constants/analytics_events.dart';
 import '../../core/l10n/locale_provider.dart';
 import '../../core/services/analytics_service.dart';
+import '../../core/services/pending_restore_service.dart';
+import '../../core/theme/widgets/banner_ad_widget.dart';
 import '../../core/services/network_guard.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../garage/reward_modal.dart';
 import '../garage/set_wallpaper_modal.dart';
 import '../../core/theme/widgets/loading_modal.dart';
@@ -38,6 +39,10 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
 
   final Map<int, NativeAd> _nativeAds = {};
   final Map<int, bool> _nativeAdLoaded = {};
+
+  late DateTime _openTime;
+  int _swipeCount = 0;
+  late String _sessionCategory;
 
   // Insert a native ad slot every 5 themes (chỉ khi ads bật)
   static List<ThemeItem?> _buildFeed(List<ThemeItem> themes) {
@@ -98,7 +103,9 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
   void initState() {
     super.initState();
     // Mirror đúng filter đang active ở S2 (category + fav)
+    _openTime = DateTime.now();
     final selectedCat = ref.read(selectedCategoryProvider);
+    _sessionCategory = selectedCat == 'ALL SYSTEM' ? 'all' : selectedCat.toLowerCase();
     final favOnly = ref.read(favFilterActiveProvider);
     final allThemes = ref.read(themeStateProvider); // có isFavorite state
     _themes = allThemes.where((t) {
@@ -127,6 +134,11 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
 
   @override
   void dispose() {
+    analyticsService.logThemePreviewClosed(
+      themeId: _current.id.toString(),
+      timeSpentSec: DateTime.now().difference(_openTime).inSeconds,
+      action: 'back',
+    );
     _pageCtrl.dispose();
     for (final ad in _nativeAds.values) ad.dispose();
     super.dispose();
@@ -146,6 +158,14 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
       return;
     }
     setState(() => _currentIndex = _themes.indexOf(item));
+    _swipeCount++;
+    analyticsService.logThemeSwiped(
+      themeId: item.id.toString(),
+      themeName: item.title,
+      positionIndex: _currentIndex,
+      category: _sessionCategory,
+      swipeCount: _swipeCount,
+    );
   }
 
   Future<void> _handleApply() async {
@@ -153,28 +173,28 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
     if (!mounted) return;
 
     final theme = _current;
-    final prefs = await SharedPreferences.getInstance();
 
     Future<void> _doApply() async {
-      // Ghi flag TRƯỚC khi gọi modal — nếu MIUI kill trong setWallpaper(),
-      // LoadingScreen đọc flag này để restore về Gallery đúng vị trí theme.
-      await prefs.setInt('pending_gallery_theme_id', theme.id);
+      await pendingRestoreService.saveGalleryApply(themeId: theme.id);
 
       bool _applied = false;
       await SetWallpaperModal.showLocalized(context, ref.read(stringsProvider),
           imagePath: theme.img,
-          onSuccess: () {
+          onSuccess: (target) {
             _applied = true;
-            prefs.remove('pending_gallery_theme_id');
+            pendingRestoreService.clearGalleryApply();
             analyticsService.logWallpaperSetAs(
               themeId: theme.id.toString(),
-              target: AnalyticsValue.homeScreen,
+              target: switch (target) {
+                WallpaperTarget.home => AnalyticsValue.homeScreen,
+                WallpaperTarget.lock => AnalyticsValue.lockScreen,
+                WallpaperTarget.both => AnalyticsValue.both,
+              },
             );
           });
 
-      // User cancel hoặc set thất bại → xóa flag
       if (!_applied) {
-        await prefs.remove('pending_gallery_theme_id');
+        await pendingRestoreService.clearGalleryApply();
       }
     }
 
@@ -184,6 +204,7 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
         rewardContext: RewardContext.unlockTheme,
         itemId: theme.id.toString(),
         itemName: theme.title,
+        isFirstUnlock: !entitlement.isThemeUnlocked(theme.id),
         onRewarded: () async {
           await ref.read(entitlementProvider.notifier).unlockTheme(theme.id);
           if (mounted) await _doApply();
@@ -221,12 +242,27 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final themes = ref.watch(themeStateProvider);
+    // BUG-006: cập nhật isFavorite trong _themes khi provider thay đổi (favorites toggled)
+    // mà không thay đổi thứ tự/độ dài list → không gây page jump trong PageView
+    ref.listen<List<ThemeItem>>(themeStateProvider, (_, next) {
+      if (!mounted) return;
+      setState(() {
+        _themes = _themes
+            .map((t) => next.firstWhere((n) => n.id == t.id, orElse: () => t))
+            .toList();
+        _feed = _buildFeed(_themes);
+      });
+    });
+
     final entitlementState = ref.watch(entitlementProvider).valueOrNull;
     final theme = _current;
 
     return Scaffold(
       backgroundColor: AppColors.bgAmoled,
+      bottomNavigationBar: const SafeArea(
+        top: false,
+        child: BannerAdWidget(),
+      ),
       body: Stack(
         children: [
           // Empty state khi không có theme yêu thích
@@ -302,6 +338,19 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
                               );
                           return GestureDetector(
                             onTap: () {
+                              if (t.isFavorite) {
+                                analyticsService.logThemeUnfavorited(
+                                  themeId: theme.id.toString(),
+                                  themeName: theme.title,
+                                  source: 'gallery',
+                                );
+                              } else {
+                                analyticsService.logThemeFavorited(
+                                  themeId: theme.id.toString(),
+                                  themeName: theme.title,
+                                  source: 'gallery',
+                                );
+                              }
                               ref.read(themeStateProvider.notifier).toggleFavorite(theme.id);
                               final s = ref.read(stringsProvider);
                               CyberToast.show(context,
@@ -326,7 +375,7 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
             left: 0,
             right: 0,
             child: Container(
-              padding: const EdgeInsets.fromLTRB(16, 20, 16, 32),
+              padding: const EdgeInsets.fromLTRB(16, 20, 16, 16),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,

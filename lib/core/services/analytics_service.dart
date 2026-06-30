@@ -68,6 +68,52 @@ class AnalyticsService {
 
   // ── Browsing ────────────────────────────────────────────────────────────────
 
+  Future<void> logCategorySelected({
+    required String category,
+    required String source,
+  }) =>
+      _log(AnalyticsEvent.categorySelected, {
+        AnalyticsParam.category: category,
+        AnalyticsParam.source: source,
+      });
+
+  Future<void> logThemeSwiped({
+    required String themeId,
+    required String themeName,
+    required int positionIndex,
+    required String category,
+    required int swipeCount,
+  }) =>
+      _log(AnalyticsEvent.themeSwiped, {
+        AnalyticsParam.themeId: themeId,
+        AnalyticsParam.themeName: themeName,
+        AnalyticsParam.positionIndex: positionIndex,
+        AnalyticsParam.category: category,
+        AnalyticsParam.swipeCount: swipeCount,
+      });
+
+  Future<void> logThemeFavorited({
+    required String themeId,
+    required String themeName,
+    required String source,
+  }) =>
+      _log(AnalyticsEvent.themeFavorited, {
+        AnalyticsParam.themeId: themeId,
+        AnalyticsParam.themeName: themeName,
+        AnalyticsParam.source: source,
+      });
+
+  Future<void> logThemeUnfavorited({
+    required String themeId,
+    required String themeName,
+    required String source,
+  }) =>
+      _log(AnalyticsEvent.themeUnfavorited, {
+        AnalyticsParam.themeId: themeId,
+        AnalyticsParam.themeName: themeName,
+        AnalyticsParam.source: source,
+      });
+
   Future<void> logThemeListViewed({
     required String category,
     required String source,
@@ -87,7 +133,7 @@ class AnalyticsService {
       _log(AnalyticsEvent.themeCardClicked, {
         AnalyticsParam.themeId: themeId,
         AnalyticsParam.themeName: themeName,
-        AnalyticsParam.isPremium: isPremium,
+        AnalyticsParam.isPremium: isPremium ? 1 : 0,
         AnalyticsParam.positionIndex: positionIndex,
         AnalyticsParam.category: category,
       });
@@ -99,7 +145,7 @@ class AnalyticsService {
   }) =>
       _log(AnalyticsEvent.themePreviewOpened, {
         AnalyticsParam.themeId: themeId,
-        AnalyticsParam.isPremium: isPremium,
+        AnalyticsParam.isPremium: isPremium ? 1 : 0,
         AnalyticsParam.source: source,
       });
 
@@ -127,7 +173,7 @@ class AnalyticsService {
       _log(AnalyticsEvent.stickerCardClicked, {
         AnalyticsParam.stickerId: stickerId,
         AnalyticsParam.stickerName: stickerName,
-        AnalyticsParam.isPremium: isPremium,
+        AnalyticsParam.isPremium: isPremium ? 1 : 0,
         AnalyticsParam.positionIndex: positionIndex,
       });
 
@@ -312,7 +358,7 @@ class AnalyticsService {
         AnalyticsParam.itemId: itemId,
         AnalyticsParam.itemName: itemName,
         AnalyticsParam.unlockMethod: method,
-        AnalyticsParam.isFirstUnlock: isFirstUnlock,
+        AnalyticsParam.isFirstUnlock: isFirstUnlock ? 1 : 0,
       });
 
   Future<void> logUnlockAbandoned({

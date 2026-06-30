@@ -6,6 +6,7 @@ import '../../core/models/app_data.dart';
 import '../../core/models/theme_item.dart';
 import '../../core/services/analytics_service.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/theme/widgets/banner_ad_widget.dart';
 import '../../core/theme/widgets/cyber_toast.dart';
 import '../../providers/entitlement_provider.dart';
 import '../../providers/theme_state_provider.dart';
@@ -36,11 +37,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.bgAmoled,
+      bottomNavigationBar: const SafeArea(
+        top: false,
+        child: BannerAdWidget(),
+      ),
       body: SafeArea(
+        bottom: false,
         child: Column(
           children: [
             _Header(),
-            _CategoryScroll(selectedCat: selectedCat, favActive: favActive, ref: ref),
+            const _CategoryScroll(),
             Expanded(
               child: filteredThemes.isEmpty
                   ? _EmptyState(favActive: favActive, s: ref.watch(stringsProvider))
@@ -86,19 +92,13 @@ class _Header extends StatelessWidget {
   }
 }
 
-class _CategoryScroll extends StatelessWidget {
-  final String selectedCat;
-  final bool favActive;
-  final WidgetRef ref;
-
-  const _CategoryScroll({
-    required this.selectedCat,
-    required this.favActive,
-    required this.ref,
-  });
+class _CategoryScroll extends ConsumerWidget {
+  const _CategoryScroll();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final selectedCat = ref.watch(selectedCategoryProvider);
+    final favActive = ref.watch(favFilterActiveProvider);
     return SizedBox(
       height: 40,
       child: ListView(
@@ -115,6 +115,10 @@ class _CategoryScroll extends StatelessWidget {
                   ref.read(selectedCategoryProvider.notifier).state = 'ALL SYSTEM';
                 }
                 ref.read(favFilterActiveProvider.notifier).state = !favActive;
+                analyticsService.logCategorySelected(
+                  category: favActive ? 'ALL SYSTEM' : 'favorites',
+                  source: 'home',
+                );
               },
             activeColor: AppColors.neonPink,
           ),
@@ -125,6 +129,10 @@ class _CategoryScroll extends StatelessWidget {
                 onTap: () {
                   ref.read(favFilterActiveProvider.notifier).state = false;
                   ref.read(selectedCategoryProvider.notifier).state = cat;
+                  analyticsService.logCategorySelected(
+                    category: cat,
+                    source: 'home',
+                  );
                 },
               )),
         ],
@@ -255,6 +263,19 @@ class _ThemeCard extends ConsumerWidget {
             child: GestureDetector(
               onTap: () {
                 final s = ref.read(stringsProvider);
+                if (theme.isFavorite) {
+                  analyticsService.logThemeUnfavorited(
+                    themeId: theme.id.toString(),
+                    themeName: theme.title,
+                    source: 'home',
+                  );
+                } else {
+                  analyticsService.logThemeFavorited(
+                    themeId: theme.id.toString(),
+                    themeName: theme.title,
+                    source: 'home',
+                  );
+                }
                 ref.read(themeStateProvider.notifier).toggleFavorite(theme.id);
                 CyberToast.show(
                   context,

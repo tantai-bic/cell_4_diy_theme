@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/l10n/locale_provider.dart';
 import '../../core/models/theme_item.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/theme/widgets/banner_ad_widget.dart';
 import '../../core/theme/widgets/cyber_toast.dart';
 import '../../core/theme/widgets/loading_modal.dart';
 import '../../providers/library_provider.dart';
@@ -91,10 +92,14 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
           ],
         ),
       ),
-      // SafeArea(top: false) — AppBar đã xử lý top, chỉ cần bottom để
-      // GridView không bị navigation bar che phủ
+      bottomNavigationBar: const SafeArea(
+        top: false,
+        child: BannerAdWidget(),
+      ),
+      // SafeArea(top: false, bottom: false) — AppBar xử lý top, banner xử lý bottom
       body: SafeArea(
         top: false,
+        bottom: false,
         child: library.when(
           loading: () => const Center(child: CircularProgressIndicator(color: AppColors.neonCyan)),
           error: (e, _) => Center(child: Text('Error: $e', style: const TextStyle(color: AppColors.neonPink))),

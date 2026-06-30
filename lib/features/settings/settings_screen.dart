@@ -4,8 +4,10 @@ import 'package:go_router/go_router.dart';
 import 'package:in_app_review/in_app_review.dart';
 import 'package:share_plus/share_plus.dart' show ShareParams, SharePlus;
 import 'package:url_launcher/url_launcher.dart';
+import '../../core/constants/app_constants.dart';
 import '../../core/l10n/locale_provider.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/theme/widgets/banner_ad_widget.dart';
 import '../../providers/entitlement_provider.dart';
 import 'premium_modal.dart';
 
@@ -24,6 +26,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.bgAmoled,
+      bottomNavigationBar: const SafeArea(
+        top: false,
+        child: BannerAdWidget(),
+      ),
       appBar: AppBar(
         backgroundColor: AppColors.bgCyber,
         leading: IconButton(
@@ -68,7 +74,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             label: s.feedbackLabel,
             sub: s.feedbackSub,
             onTap: () async {
-              final uri = Uri.parse('mailto:claudecell04@gmail.com?subject=DIY Wallpaper Feedback');
+              final uri = Uri.parse('mailto:${AppConstants.supportEmail}?subject=DIY Wallpaper Feedback');
               if (await canLaunchUrl(uri)) await launchUrl(uri);
             },
           ),
@@ -77,7 +83,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             label: s.shareAppLabel,
             sub: s.shareAppSub,
             onTap: () => SharePlus.instance.share(ShareParams(
-              text: 'Check out DIY Wallpaper! https://play.google.com/store/apps/details?id=com.studio.diy_wallpaper',
+              text: 'Check out DIY Wallpaper! ${AppConstants.playStoreUrl}',
             )),
           ),
           _tile(
@@ -252,7 +258,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   ? () async {
                       Navigator.of(ctx).pop();
                       await review.openStoreListing(
-                          appStoreId: 'com.studio.diy_wallpaper');
+                          appStoreId: AppConstants.packageId);
                     }
                   : null,
               child: Text(s.rateConfirm,
