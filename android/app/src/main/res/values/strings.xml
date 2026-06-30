@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">DIY Wallpaper</string>
+    <!-- Replace with real AppLovin SDK key before release -->
+    <string name="applovin_sdk_key">YOUR_APPLOVIN_SDK_KEY_HERE</string>
+</resources>

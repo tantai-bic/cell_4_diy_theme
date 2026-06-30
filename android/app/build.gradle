@@ -1,0 +1,70 @@
+plugins {
+    id "com.android.application"
+    id "org.jetbrains.kotlin.android"
+    id "dev.flutter.flutter-gradle-plugin"
+    id "com.google.gms.google-services"
+    id "com.google.firebase.appdistribution"
+}
+
+android {
+    namespace "com.studio.diy_wallpaper"
+    compileSdk = flutter.compileSdkVersion
+    ndkVersion = flutter.ndkVersion
+
+    defaultConfig {
+        applicationId "com.studio.diy_wallpaper"
+        minSdk 24
+        targetSdk = flutter.targetSdkVersion
+        versionCode = flutter.versionCode
+        versionName = flutter.versionName
+    }
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+
+    kotlinOptions {
+        jvmTarget = "17"
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled true
+            proguardFiles getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
+            signingConfig signingConfigs.debug
+            firebaseAppDistribution {
+                artifactType = "APK"
+                releaseNotes = "Internal build"
+                groups = "internal-testers"
+            }
+        }
+    }
+}
+
+flutter {
+    source = "../.."
+}
+
+// Auto-copy google-services.json từ project root vào android/app/ trước mỗi build.
+// File gốc: <project-root>/google-services.json (gitignored, không commit)
+// File đích: android/app/google-services.json (gitignored)
+tasks.register("copyGoogleServices") {
+    doFirst {
+        def src = rootProject.file("../google-services.json")
+        def dst = file("google-services.json")
+        if (src.exists()) {
+            copy { from src; into dst.parent }
+            println "[copyGoogleServices] Copied ${src} -> ${dst}"
+        } else {
+            throw new GradleException(
+                "[copyGoogleServices] MISSING: ${src.absolutePath}\n" +
+                "Đặt google-services.json vào project root trước khi build."
+            )
+        }
+    }
+}
+preBuild.dependsOn "copyGoogleServices"
+
+// Redirect Gradle build output to Flutter's expected location
+buildDir = "${rootProject.projectDir}/../build/app"
