@@ -14,6 +14,7 @@ import '../../providers/theme_state_provider.dart';
 import '../../core/constants/analytics_events.dart';
 import '../../core/l10n/locale_provider.dart';
 import '../../core/services/analytics_service.dart';
+import '../../core/theme/widgets/banner_ad_widget.dart';
 import '../../core/services/network_guard.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../garage/reward_modal.dart';
@@ -38,6 +39,10 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
 
   final Map<int, NativeAd> _nativeAds = {};
   final Map<int, bool> _nativeAdLoaded = {};
+
+  late DateTime _openTime;
+  int _swipeCount = 0;
+  late String _sessionCategory;
 
   // Insert a native ad slot every 5 themes (chỉ khi ads bật)
   static List<ThemeItem?> _buildFeed(List<ThemeItem> themes) {
@@ -98,7 +103,9 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
   void initState() {
     super.initState();
     // Mirror đúng filter đang active ở S2 (category + fav)
+    _openTime = DateTime.now();
     final selectedCat = ref.read(selectedCategoryProvider);
+    _sessionCategory = selectedCat == 'ALL SYSTEM' ? 'all' : selectedCat.toLowerCase();
     final favOnly = ref.read(favFilterActiveProvider);
     final allThemes = ref.read(themeStateProvider); // có isFavorite state
     _themes = allThemes.where((t) {
@@ -127,6 +134,11 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
 
   @override
   void dispose() {
+    analyticsService.logThemePreviewClosed(
+      themeId: _current.id.toString(),
+      timeSpentSec: DateTime.now().difference(_openTime).inSeconds,
+      action: 'back',
+    );
     _pageCtrl.dispose();
     for (final ad in _nativeAds.values) ad.dispose();
     super.dispose();
@@ -146,6 +158,14 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
       return;
     }
     setState(() => _currentIndex = _themes.indexOf(item));
+    _swipeCount++;
+    analyticsService.logThemeSwiped(
+      themeId: item.id.toString(),
+      themeName: item.title,
+      positionIndex: _currentIndex,
+      category: _sessionCategory,
+      swipeCount: _swipeCount,
+    );
   }
 
   Future<void> _handleApply() async {
@@ -227,6 +247,10 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.bgAmoled,
+      bottomNavigationBar: const SafeArea(
+        top: false,
+        child: BannerAdWidget(),
+      ),
       body: Stack(
         children: [
           // Empty state khi không có theme yêu thích
@@ -302,6 +326,19 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
                               );
                           return GestureDetector(
                             onTap: () {
+                              if (t.isFavorite) {
+                                analyticsService.logThemeUnfavorited(
+                                  themeId: theme.id.toString(),
+                                  themeName: theme.title,
+                                  source: 'gallery',
+                                );
+                              } else {
+                                analyticsService.logThemeFavorited(
+                                  themeId: theme.id.toString(),
+                                  themeName: theme.title,
+                                  source: 'gallery',
+                                );
+                              }
                               ref.read(themeStateProvider.notifier).toggleFavorite(theme.id);
                               final s = ref.read(stringsProvider);
                               CyberToast.show(context,
@@ -326,7 +363,7 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
             left: 0,
             right: 0,
             child: Container(
-              padding: const EdgeInsets.fromLTRB(16, 20, 16, 32),
+              padding: const EdgeInsets.fromLTRB(16, 20, 16, 16),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,

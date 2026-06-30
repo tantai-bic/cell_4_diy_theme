@@ -11,9 +11,13 @@ abstract final class AnalyticsEvent {
 
   // ── Browsing ────────────────────────────────────────────────────────────────
   static const String themeListViewed = 'theme_list_viewed';
+  static const String categorySelected = 'category_selected';
   static const String themeCardClicked = 'theme_card_clicked';
   static const String themePreviewOpened = 'theme_preview_opened';
   static const String themePreviewClosed = 'theme_preview_closed';
+  static const String themeSwiped = 'theme_swiped';
+  static const String themeFavorited = 'theme_favorited';
+  static const String themeUnfavorited = 'theme_unfavorited';
   static const String stickerListViewed = 'sticker_list_viewed';
   static const String stickerCardClicked = 'sticker_card_clicked';
 
@@ -101,6 +105,9 @@ abstract final class AnalyticsParam {
   static const String isFirstUnlock = 'is_first_unlock';
   static const String methodAttempted = 'method_attempted';
   static const String step = 'step';
+
+  // Swipe / Browse
+  static const String swipeCount = 'swipe_count';
 
   // Editor
   static const String editDurationSec = 'edit_duration_sec';

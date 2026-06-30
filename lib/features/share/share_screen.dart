@@ -31,6 +31,34 @@ class ShareScreen extends ConsumerStatefulWidget {
 class _ShareScreenState extends ConsumerState<ShareScreen> {
   bool _saved = false;
 
+  /// Thống nhất cả 2 flow (normal + MIUI restart):
+  /// Luôn lấy sticker data từ ShareArgs (đã có sẵn cho cả 2 case)
+  /// và navigate về Garage với đầy đủ thông tin.
+  Future<void> _goBackToGarage(BuildContext ctx) async {
+    await _saveWallpaper();
+    if (!mounted) return;
+
+    // Deserialize stickers từ ShareArgs — valid cho cả normal flow và MIUI flow
+    final stickers = widget.args.stickerLayersJson
+        .map((j) => StickerLayer.fromJson(jsonDecode(j) as Map<String, dynamic>))
+        .toList();
+
+    // MIUI flow: Share là route root → prefs chưa được dọn ở loading_screen
+    if (!ctx.canPop()) {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('pending_garage_theme_id');
+      await prefs.remove('pending_garage_stickers');
+    }
+
+    if (!mounted) return;
+    // Cả 2 flow dùng goNamed để Garage nhận GarageArgs với stickers đầy đủ
+    ctx.goNamed(
+      'garage',
+      pathParameters: {'themeId': widget.args.themeId.toString()},
+      extra: GarageArgs(initialStickers: stickers),
+    );
+  }
+
   Future<void> _saveWallpaper() async {
     if (_saved) return;
     if (widget.args.imagePath.isEmpty ||
@@ -73,8 +101,9 @@ class _ShareScreenState extends ConsumerState<ShareScreen> {
   @override
   Widget build(BuildContext context) {
     return PopScope(
+      canPop: false,
       onPopInvoked: (didPop) {
-        if (didPop) _saveWallpaper(); // hardware back button
+        if (!didPop) _goBackToGarage(context); // hardware back → về Garage với stickers
       },
       child: Scaffold(
         backgroundColor: AppColors.bgAmoled,
@@ -82,31 +111,7 @@ class _ShareScreenState extends ConsumerState<ShareScreen> {
           backgroundColor: AppColors.bgCyber,
           leading: IconButton(
             icon: const Icon(Icons.arrow_back_ios, color: AppColors.neonCyan),
-            onPressed: () async {
-              await _saveWallpaper(); // hoàn thành trước khi navigate
-              if (!mounted) return;
-              if (context.canPop()) {
-                context.pop();
-              } else {
-                // MIUI restart: Share là root → restore Garage với đúng theme + stickers
-                final prefs = await SharedPreferences.getInstance();
-                if (!mounted) return;
-                final themeId = prefs.getInt('pending_garage_theme_id') ?? 1;
-                final stickersJson =
-                    prefs.getStringList('pending_garage_stickers') ?? [];
-                final stickers = stickersJson
-                    .map((j) => StickerLayer.fromJson(
-                        jsonDecode(j) as Map<String, dynamic>))
-                    .toList();
-                await prefs.remove('pending_garage_theme_id');
-                await prefs.remove('pending_garage_stickers');
-                if (mounted) {
-                  context.goNamed('garage',
-                      pathParameters: {'themeId': themeId.toString()},
-                      extra: GarageArgs(initialStickers: stickers));
-                }
-              }
-            },
+            onPressed: () => _goBackToGarage(context),
           ),
           title: Text(ref.watch(stringsProvider).shareTitle,
               style: const TextStyle(

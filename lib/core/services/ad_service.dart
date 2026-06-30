@@ -130,6 +130,7 @@ class AdService {
   }
 
   static const String nativeAdUnitId = 'ca-app-pub-3940256099942544/2247696110';
+  static const String bannerAdUnitId = 'ca-app-pub-3940256099942544/6300978111';
 }
 
 final adService = AdService();

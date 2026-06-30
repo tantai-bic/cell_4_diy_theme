@@ -149,7 +149,14 @@ class _GarageScreenState extends ConsumerState<GarageScreen> {
       barrierDismissible: false,
       builder: (_) => _UnsavedChangesModal(
         onSaveDraft: () async {
-          // LoadingModal đè lên dialog — canvas vẫn trong tree nên vẫn capture được
+          if (!mounted) return;
+          // Pop dialog TRƯỚC — LoadingModal.show() gọi popUntil(PopupRoute)
+          // nên nếu show() trước, nó dismiss dialog luôn rồi pop() sau
+          // sẽ pop Garage (root khi MIUI restart) → crash.
+          Navigator.of(context).pop(_UnsavedAction.saveDraft);
+          await WidgetsBinding.instance.endOfFrame;
+
+          if (!mounted) return;
           LoadingModal.show(context, messageBuilder: (s) => s.saving);
 
           final snapshotPath = await _captureCanvas();
@@ -168,9 +175,6 @@ class _GarageScreenState extends ConsumerState<GarageScreen> {
           );
           await ref.read(libraryProvider.notifier).saveDraft(draft);
 
-          if (!mounted) return;
-          Navigator.of(context).pop(_UnsavedAction.saveDraft); // đóng dialog
-          await WidgetsBinding.instance.endOfFrame;
           LoadingModal.hide();
           if (mounted) _navigateBack();
         },

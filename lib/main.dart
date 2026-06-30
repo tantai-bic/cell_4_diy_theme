@@ -2,6 +2,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'core/l10n/locale_provider.dart';
@@ -11,7 +12,10 @@ import 'core/theme/app_theme.dart';
 import 'router/app_router.dart';
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
+  // Preserve native splash cho đến khi LoadingScreen gọi remove()
+  final widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
+  FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
+
   await Firebase.initializeApp();
 
   // Full screen / immersive

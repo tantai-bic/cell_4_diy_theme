@@ -6,6 +6,7 @@ import 'package:share_plus/share_plus.dart' show ShareParams, SharePlus;
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/l10n/locale_provider.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/theme/widgets/banner_ad_widget.dart';
 import '../../providers/entitlement_provider.dart';
 import 'premium_modal.dart';
 
@@ -24,6 +25,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.bgAmoled,
+      bottomNavigationBar: const SafeArea(
+        top: false,
+        child: BannerAdWidget(),
+      ),
       appBar: AppBar(
         backgroundColor: AppColors.bgCyber,
         leading: IconButton(

@@ -8,6 +8,7 @@ import '../../core/l10n/locale_provider.dart';
 import '../../core/models/app_data.dart';
 import '../../core/models/theme_item.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/theme/widgets/banner_ad_widget.dart';
 import '../../core/theme/widgets/cyber_button.dart';
 import '../../core/theme/widgets/cyber_toast.dart';
 import '../../core/theme/widgets/loading_modal.dart';
@@ -63,38 +64,45 @@ class WallDetailScreen extends ConsumerWidget {
           ),
         ],
       ),
-      // 2 buttons căn giữa bottom bar
+      // 2 buttons + Banner luôn dưới cùng
       bottomNavigationBar: SafeArea(
-        child: Container(
-          color: AppColors.bgCyber,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          child: Row(
-            children: [
-              Expanded(
-                child: CyberButton(
-                  label: s.applyFree,
-                  onTap: () => SetWallpaperModal.showLocalized(context, s,
-                      imagePath: wall.imagePath,
-                      onSuccess: () => context.pop()),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: CyberButton(
-                  label: s.editInGarage,
-                  variant: CyberButtonVariant.secondary,
-                  onTap: () => context.pushNamed(
-                    'garage',
-                    pathParameters: {'themeId': theme.id.toString()},
-                    extra: GarageArgs(
-                      fromLibrary: true,
-                      initialStickers: stickerLayers,
+        top: false,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              color: AppColors.bgCyber,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: CyberButton(
+                      label: s.applyFree,
+                      onTap: () => SetWallpaperModal.showLocalized(context, s,
+                          imagePath: wall.imagePath,
+                          onSuccess: () => context.pop()),
                     ),
                   ),
-                ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: CyberButton(
+                      label: s.editInGarage,
+                      variant: CyberButtonVariant.secondary,
+                      onTap: () => context.pushNamed(
+                        'garage',
+                        pathParameters: {'themeId': theme.id.toString()},
+                        extra: GarageArgs(
+                          fromLibrary: true,
+                          initialStickers: stickerLayers,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ],
-          ),
+            ),
+            const BannerAdWidget(),
+          ],
         ),
       ),
       body: wall.imagePath.startsWith('/')
