@@ -18,9 +18,9 @@ class EnStrings extends AppStrings {
   @override String get addedToFavorites => 'ADDED TO FAVORITES';
   @override String get removedFromFavorites => 'REMOVED FROM FAVORITES';
 
-  @override String get enterGarage => 'ENTER GARAGE';
+  @override String get enterGarage => 'CUSTOMIZE';
   @override String get applyLabel => 'APPLY';
-  @override String get lockedGarage => '🔒 GARAGE';
+  @override String get lockedGarage => '🔒 CUSTOMIZE';
   @override String get lockedApply => '🔒 APPLY';
 
   @override String get applyButton => 'APPLY';
@@ -92,14 +92,28 @@ class EnStrings extends AppStrings {
   @override String get copyLink => 'COPY LINK';
   @override String get linkCopied => 'LINK COPIED!';
 
+  @override String get miuiGuideTitle => 'OPTIMIZE FOR MIUI';
+  @override String get miuiGuideSubtitle => 'Grant immunity so MIUI never kills the app while setting wallpaper.';
+  @override String get miuiGuideStep1Title => 'STEP 1 — AUTOSTART';
+  @override String get miuiGuideStep1Body => 'Enable Autostart for DIY Wallpaper so the system keeps it alive.';
+  @override String get miuiGuideStep2Title => 'STEP 2 — BATTERY';
+  @override String get miuiGuideStep2Body => 'Set battery restriction to "No restrictions" to prevent force-close.';
+  @override String get miuiGuideOpenAutostart => 'OPEN AUTOSTART SETTINGS';
+  @override String get miuiGuideOpenBattery => 'OPEN BATTERY SETTINGS';
+  @override String get miuiGuideDone => 'GOT IT';
+
+  @override String get splashSubtitle => 'WALLPAPER STUDIO';
+  @override String get splashInitializing => 'INITIALIZING SYSTEM...';
+
   @override String get libraryTitle => 'LIBRARY';
   @override String get wallpaperTab => 'WALLPAPER';
   @override String get draftTab => 'DRAFT';
   @override String get deleted => 'DELETED';
   @override String get savedToGallery => 'SAVED TO GALLERY';
   @override String get saveFailed => 'SAVE FAILED';
-  @override String get continueMod => 'CONTINUE MODDING';
+  @override String get galleryPermissionDenied => 'GALLERY ACCESS DENIED. OPEN SETTINGS TO ALLOW.';
+  @override String get continueMod => 'CONTINUE CUSTOMIZE';
   @override String get applyFree => 'APPLY';
-  @override String get editInGarage => 'EDIT IN GARAGE';
+  @override String get editInGarage => 'CUSTOMIZE';
   @override String get saveToDevice => 'SAVE TO DEVICE';
 }

@@ -9,12 +9,27 @@ import '../../core/theme/app_theme.dart';
 import '../../core/theme/widgets/cyber_toast.dart';
 import '../../providers/entitlement_provider.dart';
 import '../../providers/theme_state_provider.dart';
+import 'miui_guide_dialog.dart';
 
-class HomeScreen extends ConsumerWidget {
+class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends ConsumerState<HomeScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // Hiển thị MIUI guide một lần duy nhất nếu đang chạy trên MIUI
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      showMiuiGuideIfNeeded(context);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final filteredThemes = ref.watch(filteredThemesProvider);
     final selectedCat = ref.watch(selectedCategoryProvider);
     final favActive = ref.watch(favFilterActiveProvider);
@@ -155,8 +170,12 @@ class _ThemeGrid extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Thêm bottom inset từ MediaQuery để items cuối không bị cắt
+    // bởi gesture navigation bar (SafeArea trên Column đã xử lý hard constraint,
+    // nhưng cần thêm padding nội dung để scroll comfortably)
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
     return GridView.builder(
-      padding: const EdgeInsets.all(12),
+      padding: EdgeInsets.fromLTRB(12, 12, 12, 12 + bottomPadding),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
         mainAxisSpacing: 8,

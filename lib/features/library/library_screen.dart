@@ -91,29 +91,34 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
           ],
         ),
       ),
-      body: library.when(
-        loading: () => const Center(child: CircularProgressIndicator(color: AppColors.neonCyan)),
-        error: (e, _) => Center(child: Text('Error: $e', style: const TextStyle(color: AppColors.neonPink))),
-        data: (state) => TabBarView(
-          controller: _tabCtrl,
-          children: [
-            _WallpaperTab(
-              items: state.wallpapers,
-              bulkMode: _bulkMode,
-              selected: _selected,
-              onSelect: (key) => setState(() {
-                if (_selected.contains(key)) _selected.remove(key); else _selected.add(key);
-              }),
-            ),
-            _DraftTab(
-              items: state.drafts,
-              bulkMode: _bulkMode,
-              selected: _selected,
-              onSelect: (key) => setState(() {
-                if (_selected.contains(key)) _selected.remove(key); else _selected.add(key);
-              }),
-            ),
-          ],
+      // SafeArea(top: false) — AppBar đã xử lý top, chỉ cần bottom để
+      // GridView không bị navigation bar che phủ
+      body: SafeArea(
+        top: false,
+        child: library.when(
+          loading: () => const Center(child: CircularProgressIndicator(color: AppColors.neonCyan)),
+          error: (e, _) => Center(child: Text('Error: $e', style: const TextStyle(color: AppColors.neonPink))),
+          data: (state) => TabBarView(
+            controller: _tabCtrl,
+            children: [
+              _WallpaperTab(
+                items: state.wallpapers,
+                bulkMode: _bulkMode,
+                selected: _selected,
+                onSelect: (key) => setState(() {
+                  if (_selected.contains(key)) _selected.remove(key); else _selected.add(key);
+                }),
+              ),
+              _DraftTab(
+                items: state.drafts,
+                bulkMode: _bulkMode,
+                selected: _selected,
+                onSelect: (key) => setState(() {
+                  if (_selected.contains(key)) _selected.remove(key); else _selected.add(key);
+                }),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -132,7 +137,7 @@ class _WallpaperTab extends StatelessWidget {
   Widget build(BuildContext context) {
     if (items.isEmpty) return _empty('NO WALLPAPERS YET');
     return GridView.builder(
-      padding: const EdgeInsets.all(12),
+      padding: EdgeInsets.fromLTRB(12, 12, 12, 12 + MediaQuery.of(context).padding.bottom),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2, mainAxisSpacing: 8, crossAxisSpacing: 8, childAspectRatio: 9 / 16,
       ),
@@ -169,7 +174,7 @@ class _DraftTab extends StatelessWidget {
   Widget build(BuildContext context) {
     if (items.isEmpty) return _empty('NO DRAFTS YET');
     return GridView.builder(
-      padding: const EdgeInsets.all(12),
+      padding: EdgeInsets.fromLTRB(12, 12, 12, 12 + MediaQuery.of(context).padding.bottom),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2, mainAxisSpacing: 8, crossAxisSpacing: 8, childAspectRatio: 9 / 16,
       ),

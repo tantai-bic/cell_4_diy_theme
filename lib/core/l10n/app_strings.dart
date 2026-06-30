@@ -105,6 +105,21 @@ abstract class AppStrings {
   String get copyLink;
   String get linkCopied;
 
+  // ── MIUI Guide ────────────────────────────────────────────────────────────
+  String get miuiGuideTitle;
+  String get miuiGuideSubtitle;
+  String get miuiGuideStep1Title;
+  String get miuiGuideStep1Body;
+  String get miuiGuideStep2Title;
+  String get miuiGuideStep2Body;
+  String get miuiGuideOpenAutostart;
+  String get miuiGuideOpenBattery;
+  String get miuiGuideDone;
+
+  // ── Splash ────────────────────────────────────────────────────────────────
+  String get splashSubtitle;
+  String get splashInitializing;
+
   // ── Library ───────────────────────────────────────────────────────────────
   String get libraryTitle;
   String get wallpaperTab;
@@ -112,6 +127,7 @@ abstract class AppStrings {
   String get deleted;
   String get savedToGallery;
   String get saveFailed;
+  String get galleryPermissionDenied;
   String get continueMod;
   String get applyFree;
   String get editInGarage;
