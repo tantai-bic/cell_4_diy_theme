@@ -1,16 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../core/l10n/app_strings.dart';
+import '../../core/l10n/locale_provider.dart';
 import '../../core/services/wallpaper_service.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/widgets/cyber_button.dart';
 import '../../core/theme/widgets/cyber_toast.dart';
 import '../../core/theme/widgets/loading_modal.dart';
 
-class SetWallpaperModal extends StatelessWidget {
+class SetWallpaperModal extends ConsumerWidget {
   const SetWallpaperModal({super.key});
 
-  /// Hiển thị dialog chọn target, sau đó dùng [ctx] của CALLER để show
-  /// LoadingModal + Toast + gọi [onSuccess] — tránh dùng dialog context đã bị pop.
   static Future<void> show(
     BuildContext ctx, {
     required String imagePath,
@@ -22,24 +23,52 @@ class SetWallpaperModal extends StatelessWidget {
       builder: (_) => const SetWallpaperModal(),
     );
 
-    if (target == null) return; // user cancelled
+    if (target == null) return;
 
-    // ctx là caller context (gallery/garage) — valid sau khi dialog đã đóng
-    LoadingModal.show(ctx, message: 'SYSTEM APPLYING...');
+    LoadingModal.show(ctx, messageBuilder: (s) => s.systemApplying);
     final ok = await WallpaperService.setWallpaper(imagePath, target);
     LoadingModal.hide();
 
     if (ok) {
       HapticFeedback.heavyImpact();
-      CyberToast.show(ctx, 'WALLPAPER SET!', haptic: false);
+      CyberToast.show(ctx, '✓', haptic: false);
       onSuccess?.call();
     } else {
-      CyberToast.show(ctx, 'SET FAILED. TRY AGAIN.', variant: ToastVariant.pink);
+      CyberToast.show(ctx, '✗', variant: ToastVariant.pink);
+    }
+  }
+
+  /// Preferred: caller passes [s] so strings are localized correctly.
+  static Future<void> showLocalized(
+    BuildContext ctx,
+    AppStrings s, {
+    required String imagePath,
+    VoidCallback? onSuccess,
+  }) async {
+    final target = await showDialog<WallpaperTarget>(
+      context: ctx,
+      barrierDismissible: false,
+      builder: (_) => const SetWallpaperModal(),
+    );
+
+    if (target == null) return;
+
+    LoadingModal.show(ctx, messageBuilder: (s) => s.systemApplying);
+    final ok = await WallpaperService.setWallpaper(imagePath, target);
+    LoadingModal.hide();
+
+    if (ok) {
+      HapticFeedback.heavyImpact();
+      CyberToast.show(ctx, s.wallpaperSet, haptic: false);
+      onSuccess?.call();
+    } else {
+      CyberToast.show(ctx, s.wallpaperSetFailed, variant: ToastVariant.pink);
     }
   }
 
   @override
-  Widget build(BuildContext ctx) {
+  Widget build(BuildContext ctx, WidgetRef ref) {
+    final s = ref.watch(stringsProvider);
     return PopScope(
       canPop: false,
       child: Dialog(
@@ -51,9 +80,9 @@ class SetWallpaperModal extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Text(
-                'SET WALLPAPER',
-                style: TextStyle(
+              Text(
+                s.setWallpaperTitle,
+                style: const TextStyle(
                   color: AppColors.neonCyan,
                   fontFamily: 'Orbitron',
                   fontSize: 16,
@@ -63,25 +92,25 @@ class SetWallpaperModal extends StatelessWidget {
               ),
               const SizedBox(height: 20),
               CyberButton(
-                label: 'HOME SCREEN',
+                label: s.homeScreen,
                 fullWidth: true,
                 onTap: () => Navigator.of(ctx).pop(WallpaperTarget.home),
               ),
               const SizedBox(height: 12),
               CyberButton(
-                label: 'LOCK SCREEN',
+                label: s.lockScreen,
                 fullWidth: true,
                 onTap: () => Navigator.of(ctx).pop(WallpaperTarget.lock),
               ),
               const SizedBox(height: 12),
               CyberButton(
-                label: 'BOTH',
+                label: s.both,
                 fullWidth: true,
                 onTap: () => Navigator.of(ctx).pop(WallpaperTarget.both),
               ),
               const SizedBox(height: 16),
               CyberButton(
-                label: 'CANCEL',
+                label: s.cancel,
                 variant: CyberButtonVariant.ghost,
                 fullWidth: true,
                 onTap: () => Navigator.of(ctx).pop(),

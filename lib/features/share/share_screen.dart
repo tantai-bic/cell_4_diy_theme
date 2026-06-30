@@ -9,6 +9,8 @@ import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/models/theme_item.dart' show LibraryWallpaper;
+import '../../core/l10n/locale_provider.dart';
+import '../../core/services/analytics_service.dart';
 import '../../core/services/network_guard.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/widgets/cyber_toast.dart';
@@ -106,8 +108,8 @@ class _ShareScreenState extends ConsumerState<ShareScreen> {
               }
             },
           ),
-          title: const Text('SHARE',
-              style: TextStyle(
+          title: Text(ref.watch(stringsProvider).shareTitle,
+              style: const TextStyle(
                   color: AppColors.neonCyan,
                   fontFamily: 'Orbitron',
                   fontSize: 14)),
@@ -160,20 +162,20 @@ class _ShareScreenState extends ConsumerState<ShareScreen> {
                       Clipboard.setData(const ClipboardData(
                           text:
                               'https://play.google.com/store/apps/details?id=com.studio.diy_wallpaper'));
-                      CyberToast.show(context, 'LINK COPIED!');
+                      CyberToast.show(context, ref.read(stringsProvider).linkCopied);
                     },
                     child: Container(
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       decoration: BoxDecoration(
                         border: Border.all(color: AppColors.borderCyber),
                       ),
-                      child: const Row(
+                      child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.link, color: AppColors.textMuted, size: 16),
-                          SizedBox(width: 8),
-                          Text('COPY LINK',
-                              style: TextStyle(
+                          const Icon(Icons.link, color: AppColors.textMuted, size: 16),
+                          const SizedBox(width: 8),
+                          Text(ref.watch(stringsProvider).copyLink,
+                              style: const TextStyle(
                                   color: AppColors.textMuted,
                                   fontFamily: 'Orbitron',
                                   fontSize: 12)),
@@ -194,13 +196,19 @@ class _ShareScreenState extends ConsumerState<ShareScreen> {
     final ok = await checkNetwork(context, ref);
     if (!ok) return;
 
-    LoadingModal.show(context, message: 'SHARING...');
+    LoadingModal.show(context, messageBuilder: (s) => s.sharing);
     await Future.delayed(const Duration(milliseconds: 500));
     LoadingModal.hide();
 
-    await Share.share(
-      'Check out my wallpaper from DIY Wallpaper! https://play.google.com/store/apps/details?id=com.studio.diy_wallpaper',
-      subject: 'DIY Wallpaper',
+    await SharePlus.instance.share(
+      ShareParams(
+        text: 'Check out my wallpaper from DIY Wallpaper! https://play.google.com/store/apps/details?id=com.studio.diy_wallpaper',
+        subject: 'DIY Wallpaper',
+      ),
+    );
+    analyticsService.logWallpaperShared(
+      themeId: widget.args.themeId.toString(),
+      sharePlatform: platform.toLowerCase(),
     );
   }
 }

@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../core/l10n/locale_provider.dart';
 import '../../core/models/app_data.dart';
 import '../../core/models/theme_item.dart';
 import '../../core/theme/app_theme.dart';
@@ -24,13 +25,11 @@ class DraftDetailScreen extends ConsumerWidget {
       orElse: () => library.drafts.first,
     );
 
-    // Tìm themeId từ backgroundImg để navigate đúng theme
     final theme = kThemes.firstWhere(
       (t) => t.img == draft.backgroundImg,
       orElse: () => kThemes.first,
     );
 
-    // Sticker layers với position + scale đầy đủ
     final stickerLayers = draft.stickerLayers;
 
     return Scaffold(
@@ -50,27 +49,27 @@ class DraftDetailScreen extends ConsumerWidget {
           ),
         ),
       ),
-      body: Column(
-        children: [
-          Expanded(
-            child: _DraftPreview(draft: draft, stickerLayers: stickerLayers),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: CyberButton(
-              label: 'CONTINUE MODDING',
-              fullWidth: true,
-              onTap: () => context.pushNamed(
-                'garage',
-                pathParameters: {'themeId': theme.id.toString()},
-                extra: GarageArgs(
-                  fromLibrary: true,
-                  initialStickers: stickerLayers,
-                ),
+      // Button căn giữa bottom bar, có SafeArea cho home indicator
+      bottomNavigationBar: SafeArea(
+        child: Container(
+          color: AppColors.bgCyber,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          child: CyberButton(
+            label: ref.watch(stringsProvider).continueMod,
+            fullWidth: true,
+            onTap: () => context.pushNamed(
+              'garage',
+              pathParameters: {'themeId': theme.id.toString()},
+              extra: GarageArgs(
+                fromLibrary: true,
+                initialStickers: stickerLayers,
               ),
             ),
           ),
-        ],
+        ),
+      ),
+      body: SizedBox.expand(
+        child: _DraftPreview(draft: draft, stickerLayers: stickerLayers),
       ),
     );
   }
@@ -86,12 +85,15 @@ class _DraftPreview extends StatelessWidget {
   Widget build(BuildContext context) {
     final snapshot = draft.snapshotPath;
 
-    // Nếu có snapshot (background + stickers đã capture) → hiển thị nguyên
     if (snapshot != null && snapshot.isNotEmpty && File(snapshot).existsSync()) {
-      return Image.file(File(snapshot), fit: BoxFit.contain, width: double.infinity);
+      return Image.file(
+        File(snapshot),
+        fit: BoxFit.cover,
+        width: double.infinity,
+        height: double.infinity,
+      );
     }
 
-    // Fallback: reconstruct từ background + sticker paths (old drafts không có snapshot)
     return Stack(
       fit: StackFit.expand,
       children: [

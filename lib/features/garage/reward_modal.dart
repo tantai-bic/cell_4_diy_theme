@@ -1,33 +1,53 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../core/constants/analytics_events.dart';
+import '../../core/l10n/locale_provider.dart';
 import '../../core/services/ad_service.dart';
+import '../../core/services/analytics_service.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/widgets/cyber_button.dart';
 import '../../core/theme/widgets/loading_modal.dart';
 
 enum RewardContext { unlockTheme, applyS4, unlockItem }
 
-class RewardModal extends StatelessWidget {
-  final RewardContext context;
+class RewardModal extends ConsumerWidget {
+  final RewardContext rewardContext;
   final VoidCallback onRewarded;
   final VoidCallback? onDecline;
+  final String? itemId;
+  final String? itemName;
 
   const RewardModal({
     super.key,
-    required this.context,
+    required this.rewardContext,
     required this.onRewarded,
     this.onDecline,
+    this.itemId,
+    this.itemName,
   });
 
-  String get _title => switch (context) {
-        RewardContext.unlockTheme => 'MỞ KHÓA THEME',
-        RewardContext.applyS4 => 'ÁP DỤNG THEME',
-        RewardContext.unlockItem => 'MỞ KHÓA STICKER',
+  String _title(s) => switch (rewardContext) {
+        RewardContext.unlockTheme => s.unlockThemeTitle,
+        RewardContext.applyS4 => s.applyThemeTitle,
+        RewardContext.unlockItem => s.unlockStickerTitle,
       };
 
-  String get _body => switch (context) {
-        RewardContext.unlockTheme => 'Xem 1 video quảng cáo để mở khóa theme này vĩnh viễn.',
-        RewardContext.applyS4 => 'Xem 1 video quảng cáo để áp dụng thiết kế của bạn.',
-        RewardContext.unlockItem => 'Xem 1 video quảng cáo để mở khóa sticker này vĩnh viễn.',
+  String _body(s) => switch (rewardContext) {
+        RewardContext.unlockTheme => s.unlockThemeBody,
+        RewardContext.applyS4 => s.applyThemeBody,
+        RewardContext.unlockItem => s.unlockStickerBody,
+      };
+
+  String get _analyticsItemType => switch (rewardContext) {
+        RewardContext.unlockTheme => AnalyticsValue.theme,
+        RewardContext.applyS4 => AnalyticsValue.theme,
+        RewardContext.unlockItem => AnalyticsValue.sticker,
+      };
+
+  String get _analyticsPlacement => switch (rewardContext) {
+        RewardContext.unlockTheme => AnalyticsValue.unlockTheme,
+        RewardContext.applyS4 => AnalyticsValue.unlockTheme,
+        RewardContext.unlockItem => AnalyticsValue.unlockSticker,
       };
 
   static Future<void> show(
@@ -35,20 +55,33 @@ class RewardModal extends StatelessWidget {
     required RewardContext rewardContext,
     required VoidCallback onRewarded,
     VoidCallback? onDecline,
+    String? itemId,
+    String? itemName,
   }) {
+    analyticsService.logUnlockPromptShown(
+      itemType: switch (rewardContext) {
+        RewardContext.unlockTheme || RewardContext.applyS4 => AnalyticsValue.theme,
+        RewardContext.unlockItem => AnalyticsValue.sticker,
+      },
+      itemId: itemId ?? '',
+      unlockOptions: AnalyticsValue.watchAd,
+    );
     return showDialog(
       context: ctx,
       barrierDismissible: false,
       builder: (_) => RewardModal(
-        context: rewardContext,
+        rewardContext: rewardContext,
         onRewarded: onRewarded,
         onDecline: onDecline,
+        itemId: itemId,
+        itemName: itemName,
       ),
     );
   }
 
   @override
-  Widget build(BuildContext ctx) {
+  Widget build(BuildContext ctx, WidgetRef ref) {
+    final s = ref.watch(stringsProvider);
     return PopScope(
       canPop: false,
       child: Dialog(
@@ -69,7 +102,7 @@ class RewardModal extends StatelessWidget {
               ),
               const SizedBox(height: 16),
               Text(
-                _title,
+                _title(s),
                 style: const TextStyle(
                   color: AppColors.neonCyan,
                   fontFamily: 'Orbitron',
@@ -79,30 +112,68 @@ class RewardModal extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               Text(
-                _body,
+                _body(s),
                 style: const TextStyle(color: AppColors.textMuted, fontFamily: 'Rajdhani', fontSize: 14),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 24),
               CyberButton(
-                label: 'XEM VIDEO',
+                label: s.watchVideo,
                 fullWidth: true,
                 onTap: () {
-                  // Lấy messenger TRƯỚC khi pop (ctx vẫn còn valid)
                   final messenger = ScaffoldMessenger.of(ctx);
                   Navigator.of(ctx).pop();
-                  LoadingModal.show(ctx, message: 'LOADING ADS...');
+
+                  analyticsService.logUnlockMethodSelected(
+                    itemType: _analyticsItemType,
+                    itemId: itemId ?? '',
+                    method: AnalyticsValue.watchAd,
+                  );
+                  analyticsService.logAdWatchStarted(
+                    adType: AnalyticsValue.rewarded,
+                    placementId: _analyticsPlacement,
+                    itemId: itemId,
+                  );
+
+                  final adStartTime = DateTime.now();
+                  LoadingModal.show(ctx, messageBuilder: (s) => s.loadingAds);
                   adService.showRewarded(
                     purpose: RewardPurpose.apply,
                     onRewarded: (_) {
+                      final durationSec = DateTime.now().difference(adStartTime).inSeconds;
                       LoadingModal.hide();
+                      analyticsService.logAdWatchCompleted(
+                        adType: AnalyticsValue.rewarded,
+                        placementId: _analyticsPlacement,
+                        watchDurationSec: durationSec,
+                        itemId: itemId,
+                      );
+                      analyticsService.logItemUnlocked(
+                        itemType: _analyticsItemType,
+                        itemId: itemId ?? '',
+                        itemName: itemName ?? '',
+                        method: AnalyticsValue.watchAd,
+                        isFirstUnlock: true,
+                      );
                       onRewarded();
                     },
                     onFail: (reason) {
                       LoadingModal.hide();
                       if (reason != 'user_closed') {
+                        analyticsService.logAdFailed(
+                          adType: AnalyticsValue.rewarded,
+                          placementId: _analyticsPlacement,
+                          errorCode: reason,
+                        );
                         messenger.showSnackBar(
-                          SnackBar(content: Text('Ads không khả dụng: $reason')),
+                          SnackBar(content: Text(s.adsUnavailable(reason))),
+                        );
+                      } else {
+                        analyticsService.logUnlockAbandoned(
+                          itemType: _analyticsItemType,
+                          itemId: itemId ?? '',
+                          methodAttempted: AnalyticsValue.watchAd,
+                          step: 'ad_closed',
                         );
                       }
                     },
@@ -111,10 +182,16 @@ class RewardModal extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               CyberButton(
-                label: 'KHÔNG XEM',
+                label: s.noThanks,
                 variant: CyberButtonVariant.ghost,
                 fullWidth: true,
                 onTap: () {
+                  analyticsService.logUnlockAbandoned(
+                    itemType: _analyticsItemType,
+                    itemId: itemId ?? '',
+                    methodAttempted: AnalyticsValue.watchAd,
+                    step: 'declined',
+                  );
                   Navigator.of(ctx).pop();
                   onDecline?.call();
                 },

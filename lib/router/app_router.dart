@@ -109,9 +109,9 @@ final appRouter = GoRouter(
 
 class PreviewArgs {
   final String backgroundImg;
-  final List<String> stickerPaths;
+  final List<StickerLayer> stickerLayers;
 
-  const PreviewArgs({this.backgroundImg = '', this.stickerPaths = const []});
+  const PreviewArgs({this.backgroundImg = '', this.stickerLayers = const []});
 }
 
 class ShareArgs {

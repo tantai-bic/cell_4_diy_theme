@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/theme/app_theme.dart';
+import '../../features/garage/sticker_layer.dart';
 import '../../router/app_router.dart';
 
 class PreviewScreen extends StatefulWidget {
@@ -25,10 +26,8 @@ class _PreviewScreenState extends State<PreviewScreen> {
           if (widget.args.backgroundImg.isNotEmpty)
             Image.asset(widget.args.backgroundImg, fit: BoxFit.cover),
 
-          // Stickers (no controls)
-          ...widget.args.stickerPaths.map((src) => Center(
-                child: Image.asset(src, width: 100, height: 100),
-              )),
+          // Stickers — rendered at exact positions from garage canvas
+          ...widget.args.stickerLayers.map((s) => _StickerPreview(layer: s)),
 
           // Mock HUD overlay
           if (_showClock)
@@ -131,6 +130,31 @@ class _PreviewScreenState extends State<PreviewScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _StickerPreview extends StatelessWidget {
+  final StickerLayer layer;
+  const _StickerPreview({required this.layer});
+
+  static const double _base = 100.0;
+
+  @override
+  Widget build(BuildContext context) {
+    final size = _base * layer.scale;
+    return Positioned(
+      left: layer.x,
+      top: layer.y,
+      child: Transform.rotate(
+        angle: layer.rotation,
+        child: Image.asset(
+          layer.src,
+          width: size,
+          height: size,
+          fit: BoxFit.cover,
+        ),
       ),
     );
   }

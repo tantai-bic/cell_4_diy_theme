@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gal/gal.dart';
 import 'package:go_router/go_router.dart';
+import '../../core/l10n/locale_provider.dart';
 import '../../core/models/app_data.dart';
 import '../../core/models/theme_item.dart';
 import '../../core/theme/app_theme.dart';
@@ -20,6 +21,7 @@ class WallDetailScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final s = ref.watch(stringsProvider);
     final library = ref.watch(libraryProvider).valueOrNull;
     if (library == null) return const SizedBox.shrink();
 
@@ -28,7 +30,6 @@ class WallDetailScreen extends ConsumerWidget {
       orElse: () => library.wallpapers.first,
     );
 
-    // Tìm theme từ themeId đã lưu, fallback tìm theo title
     final theme = wall.themeId != null
         ? kThemes.firstWhere((t) => t.id == wall.themeId,
             orElse: () => kThemes.firstWhere(
@@ -53,32 +54,35 @@ class WallDetailScreen extends ConsumerWidget {
                 color: AppColors.neonCyan,
                 fontFamily: 'Orbitron',
                 fontSize: 13)),
-      ),
-      body: Column(
-        children: [
-          Expanded(
-            child: wall.imagePath.startsWith('/')
-                ? Image.file(File(wall.imagePath),
-                    fit: BoxFit.cover, width: double.infinity)
-                : Image.asset(wall.imagePath,
-                    fit: BoxFit.cover, width: double.infinity),
+        // Save to device moved here as icon action
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.save_alt_outlined, color: AppColors.neonCyan),
+            tooltip: s.saveToDevice,
+            onPressed: () => _saveToDevice(context, wall, s),
           ),
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              children: [
-                CyberButton(
-                  label: 'APPLY (FREE)',
-                  fullWidth: true,
-                  onTap: () => SetWallpaperModal.show(context,
+        ],
+      ),
+      // 2 buttons căn giữa bottom bar
+      bottomNavigationBar: SafeArea(
+        child: Container(
+          color: AppColors.bgCyber,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          child: Row(
+            children: [
+              Expanded(
+                child: CyberButton(
+                  label: s.applyFree,
+                  onTap: () => SetWallpaperModal.showLocalized(context, s,
                       imagePath: wall.imagePath,
                       onSuccess: () => context.pop()),
                 ),
-                const SizedBox(height: 10),
-                CyberButton(
-                  label: 'EDIT IN GARAGE',
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: CyberButton(
+                  label: s.editInGarage,
                   variant: CyberButtonVariant.secondary,
-                  fullWidth: true,
                   onTap: () => context.pushNamed(
                     'garage',
                     pathParameters: {'themeId': theme.id.toString()},
@@ -88,39 +92,35 @@ class WallDetailScreen extends ConsumerWidget {
                     ),
                   ),
                 ),
-                const SizedBox(height: 10),
-                CyberButton(
-                  label: 'SAVE TO DEVICE',
-                  variant: CyberButtonVariant.ghost,
-                  fullWidth: true,
-                  onTap: () => _saveToDevice(context, wall),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
+      body: wall.imagePath.startsWith('/')
+          ? Image.file(File(wall.imagePath),
+              fit: BoxFit.cover, width: double.infinity, height: double.infinity)
+          : Image.asset(wall.imagePath,
+              fit: BoxFit.cover, width: double.infinity, height: double.infinity),
     );
   }
 
-  Future<void> _saveToDevice(BuildContext context, LibraryWallpaper wall) async {
-    LoadingModal.show(context, message: 'SAVING...');
+  Future<void> _saveToDevice(BuildContext context, LibraryWallpaper wall, s) async {
+    LoadingModal.show(context, messageBuilder: (s) => s.saving);
     try {
       if (wall.imagePath.startsWith('/')) {
-        // File path → lưu thẳng vào gallery
         await Gal.putImage(wall.imagePath, album: 'DIY Wallpaper');
       } else {
-        // Asset path → đọc bytes rồi lưu
         final bytes = await DefaultAssetBundle.of(context).load(wall.imagePath);
         await Gal.putImageBytes(bytes.buffer.asUint8List(),
             name: 'diy_wallpaper_${DateTime.now().millisecondsSinceEpoch}.png',
             album: 'DIY Wallpaper');
       }
       LoadingModal.hide();
-      if (context.mounted) CyberToast.show(context, 'SAVED TO GALLERY');
+      if (context.mounted) CyberToast.show(context, s.savedToGallery);
     } catch (e) {
       LoadingModal.hide();
-      if (context.mounted) CyberToast.show(context, 'SAVE FAILED');
+      if (context.mounted) CyberToast.show(context, s.saveFailed);
     }
   }
 }

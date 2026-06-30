@@ -77,6 +77,12 @@ class EntitlementNotifier extends AsyncNotifier<EntitlementState> {
     if (s != null) state = AsyncData(s.copyWith(isPremium: true));
   }
 
+  Future<void> revokePremium() async {
+    await _prefs.setBool(_kPremium, false);
+    final s = state.valueOrNull;
+    if (s != null) state = AsyncData(s.copyWith(isPremium: false));
+  }
+
   Future<void> togglePremium() async {
     final s = state.valueOrNull;
     if (s == null) return;

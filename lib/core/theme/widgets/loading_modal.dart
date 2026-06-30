@@ -1,17 +1,28 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/l10n/app_strings.dart';
+import '../../../core/l10n/locale_provider.dart';
 import '../app_theme.dart';
 
 class LoadingModal {
   static OverlayEntry? _entry;
 
-  static void show(BuildContext context, {String message = 'PROCESSING...'}) {
-    // Đóng hết dialog / bottom sheet đang mở (PopupRoute) trước khi show
+  /// [messageBuilder] được ưu tiên — reactive theo locale.
+  /// [message] là static fallback (backward compat).
+  static void show(
+    BuildContext context, {
+    String? message,
+    String Function(AppStrings)? messageBuilder,
+  }) {
     final navigator = Navigator.of(context, rootNavigator: true);
     navigator.popUntil((route) => route is! PopupRoute);
 
     if (_entry != null) return;
     _entry = OverlayEntry(
-      builder: (_) => _LoadingOverlay(message: message),
+      builder: (_) => _LoadingOverlay(
+        message: message,
+        messageBuilder: messageBuilder,
+      ),
     );
     Overlay.of(context).insert(_entry!);
   }
@@ -24,15 +35,17 @@ class LoadingModal {
   static bool get isShowing => _entry != null;
 }
 
-class _LoadingOverlay extends StatefulWidget {
-  final String message;
-  const _LoadingOverlay({required this.message});
+class _LoadingOverlay extends ConsumerStatefulWidget {
+  final String? message;
+  final String Function(AppStrings)? messageBuilder;
+
+  const _LoadingOverlay({this.message, this.messageBuilder});
 
   @override
-  State<_LoadingOverlay> createState() => _LoadingOverlayState();
+  ConsumerState<_LoadingOverlay> createState() => _LoadingOverlayState();
 }
 
-class _LoadingOverlayState extends State<_LoadingOverlay>
+class _LoadingOverlayState extends ConsumerState<_LoadingOverlay>
     with SingleTickerProviderStateMixin {
   late AnimationController _ctrl;
   late Animation<double> _pulse;
@@ -40,8 +53,10 @@ class _LoadingOverlayState extends State<_LoadingOverlay>
   @override
   void initState() {
     super.initState();
-    _ctrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 1200))
-      ..repeat(reverse: true);
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    )..repeat(reverse: true);
     _pulse = Tween<double>(begin: 0.5, end: 1.0).animate(
       CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut),
     );
@@ -55,9 +70,17 @@ class _LoadingOverlayState extends State<_LoadingOverlay>
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () {},
-      child: Container(
+    final s = ref.watch(stringsProvider);
+    final msg = widget.messageBuilder != null
+        ? widget.messageBuilder!(s)
+        : (widget.message ?? s.systemApplying);
+
+    // Material(transparency) prevents inheriting DefaultTextStyle underline from Overlay
+    return Material(
+      type: MaterialType.transparency,
+      child: GestureDetector(
+        onTap: () {},
+        child: Container(
           color: AppColors.bgAmoled.withOpacity(0.92),
           child: Center(
             child: Column(
@@ -83,19 +106,21 @@ class _LoadingOverlayState extends State<_LoadingOverlay>
                 ),
                 const SizedBox(height: 24),
                 Text(
-                  widget.message,
+                  msg,
                   style: const TextStyle(
                     color: AppColors.neonCyan,
                     fontFamily: 'Orbitron',
                     fontSize: 13,
                     letterSpacing: 2,
+                    decoration: TextDecoration.none,
+                    decorationColor: Colors.transparent,
                   ),
                 ),
               ],
             ),
           ),
+        ),
       ),
     );
   }
 }
-

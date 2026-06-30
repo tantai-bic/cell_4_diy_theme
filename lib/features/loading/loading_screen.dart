@@ -59,7 +59,7 @@ class _LoadingScreenState extends ConsumerState<LoadingScreen>
       if (!mounted) return;
 
       LoadingModal.hide();
-      LoadingModal.show(context, message: 'SYSTEM APPLYING...');
+      LoadingModal.show(context, messageBuilder: (s) => s.systemApplying);
       await Future.delayed(const Duration(milliseconds: 1200));
 
       LoadingModal.hide();
@@ -92,7 +92,7 @@ class _LoadingScreenState extends ConsumerState<LoadingScreen>
       if (!mounted) return;
 
       LoadingModal.hide();
-      LoadingModal.show(context, message: 'SYSTEM APPLYING...');
+      LoadingModal.show(context, messageBuilder: (s) => s.systemApplying);
       await Future.delayed(const Duration(milliseconds: 1200));
 
       LoadingModal.hide();

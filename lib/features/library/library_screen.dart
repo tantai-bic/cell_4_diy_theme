@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../core/l10n/locale_provider.dart';
 import '../../core/models/theme_item.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/widgets/cyber_toast.dart';
@@ -36,7 +37,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
 
   Future<void> _deleteSelected() async {
     if (_selected.isEmpty) return;
-    LoadingModal.show(context, message: 'DELETING...');
+    LoadingModal.show(context, messageBuilder: (s) => s.deleting);
     if (_tabCtrl.index == 0) {
       await ref.read(libraryProvider.notifier).deleteWallpapers(_selected.toList());
     } else {
@@ -47,7 +48,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
       _selected.clear();
       _bulkMode = false;
     });
-    CyberToast.show(context, 'DELETED');
+    CyberToast.show(context, ref.read(stringsProvider).deleted);
   }
 
   @override
@@ -62,7 +63,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
           icon: const Icon(Icons.arrow_back_ios, color: AppColors.neonCyan),
           onPressed: () => context.pop(),
         ),
-        title: const Text('LIBRARY', style: TextStyle(color: AppColors.neonCyan, fontFamily: 'Orbitron', fontSize: 14)),
+        title: Text(ref.watch(stringsProvider).libraryTitle, style: const TextStyle(color: AppColors.neonCyan, fontFamily: 'Orbitron', fontSize: 14)),
         actions: [
           if (_bulkMode)
             IconButton(
@@ -80,12 +81,13 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
         bottom: TabBar(
           controller: _tabCtrl,
           indicatorColor: AppColors.neonCyan,
+          dividerColor: Colors.transparent,
           labelColor: AppColors.neonCyan,
           unselectedLabelColor: AppColors.textMuted,
           labelStyle: const TextStyle(fontFamily: 'Orbitron', fontSize: 11),
-          tabs: const [
-            Tab(text: 'WALLPAPER'),
-            Tab(text: 'DRAFT'),
+          tabs: [
+            Tab(text: ref.watch(stringsProvider).wallpaperTab),
+            Tab(text: ref.watch(stringsProvider).draftTab),
           ],
         ),
       ),
