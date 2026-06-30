@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'package:in_app_purchase/in_app_purchase.dart';
-
-const kPremiumProductId = 'com.studio.diy_wallpaper.premium';
+import '../constants/app_constants.dart';
 
 class IapService {
   IapService._();
@@ -48,7 +47,7 @@ class IapService {
   Future<ProductDetails?> fetchProduct() async {
     final available = await _iap.isAvailable();
     if (!available) return null;
-    final res = await _iap.queryProductDetails({kPremiumProductId});
+    final res = await _iap.queryProductDetails({AppConstants.iapPremiumId});
     if (res.notFoundIDs.isNotEmpty || res.productDetails.isEmpty) return null;
     return res.productDetails.first;
   }

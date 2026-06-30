@@ -17,6 +17,8 @@ class RewardModal extends ConsumerWidget {
   final String? itemId;
   final String? itemName;
 
+  final bool isFirstUnlock;
+
   const RewardModal({
     super.key,
     required this.rewardContext,
@@ -24,6 +26,7 @@ class RewardModal extends ConsumerWidget {
     this.onDecline,
     this.itemId,
     this.itemName,
+    this.isFirstUnlock = false,
   });
 
   String _title(s) => switch (rewardContext) {
@@ -57,6 +60,7 @@ class RewardModal extends ConsumerWidget {
     VoidCallback? onDecline,
     String? itemId,
     String? itemName,
+    bool isFirstUnlock = false,
   }) {
     analyticsService.logUnlockPromptShown(
       itemType: switch (rewardContext) {
@@ -75,6 +79,7 @@ class RewardModal extends ConsumerWidget {
         onDecline: onDecline,
         itemId: itemId,
         itemName: itemName,
+        isFirstUnlock: isFirstUnlock,
       ),
     );
   }
@@ -153,7 +158,7 @@ class RewardModal extends ConsumerWidget {
                         itemId: itemId ?? '',
                         itemName: itemName ?? '',
                         method: AnalyticsValue.watchAd,
-                        isFirstUnlock: true,
+                        isFirstUnlock: isFirstUnlock,
                       );
                       onRewarded();
                     },

@@ -46,7 +46,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         child: Column(
           children: [
             _Header(),
-            _CategoryScroll(selectedCat: selectedCat, favActive: favActive, ref: ref),
+            const _CategoryScroll(),
             Expanded(
               child: filteredThemes.isEmpty
                   ? _EmptyState(favActive: favActive, s: ref.watch(stringsProvider))
@@ -92,19 +92,13 @@ class _Header extends StatelessWidget {
   }
 }
 
-class _CategoryScroll extends StatelessWidget {
-  final String selectedCat;
-  final bool favActive;
-  final WidgetRef ref;
-
-  const _CategoryScroll({
-    required this.selectedCat,
-    required this.favActive,
-    required this.ref,
-  });
+class _CategoryScroll extends ConsumerWidget {
+  const _CategoryScroll();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final selectedCat = ref.watch(selectedCategoryProvider);
+    final favActive = ref.watch(favFilterActiveProvider);
     return SizedBox(
       height: 40,
       child: ListView(

@@ -1,10 +1,13 @@
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'core/config/app_config.dart';
 import 'core/l10n/locale_provider.dart';
 import 'core/models/theme_item.dart';
 import 'core/services/ad_service.dart';
@@ -17,6 +20,13 @@ void main() async {
   FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
 
   await Firebase.initializeApp();
+
+  FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
+  final previousOnError = PlatformDispatcher.instance.onError;
+  PlatformDispatcher.instance.onError = (error, stack) {
+    FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+    return previousOnError?.call(error, stack) ?? true;
+  };
 
   // Full screen / immersive
   SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
@@ -33,8 +43,14 @@ void main() async {
   // Load ads on/off flag trước khi khởi tạo SDK
   await adService.loadAdsEnabledFlag();
 
-  // DEV: Google Mobile Ads (key unused) — swap to AppLovin when shipping
-  await adService.initialize('');
+  await adService.initialize(AppConfig.appLovinSdkKey);
+
+  final testDeviceIds = AppConfig.testDeviceIds;
+  if (testDeviceIds.isNotEmpty) {
+    MobileAds.instance.updateRequestConfiguration(
+      RequestConfiguration(testDeviceIds: testDeviceIds),
+    );
+  }
 
   runApp(const ProviderScope(child: DiyWallpaperApp()));
 }
@@ -46,7 +62,7 @@ class DiyWallpaperApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final locale = ref.watch(localeProvider);
     return MaterialApp.router(
-      title: 'DIY Wallpaper',
+      title: 'DIY Themes',
       theme: AppTheme.dark,
       routerConfig: appRouter,
       debugShowCheckedModeBanner: false,

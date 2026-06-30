@@ -7,7 +7,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import '../../core/constants/app_constants.dart';
+import '../../core/services/pending_restore_service.dart';
 import '../../core/models/theme_item.dart' show LibraryWallpaper;
 import '../../core/l10n/locale_provider.dart';
 import '../../core/services/analytics_service.dart';
@@ -43,11 +44,9 @@ class _ShareScreenState extends ConsumerState<ShareScreen> {
         .map((j) => StickerLayer.fromJson(jsonDecode(j) as Map<String, dynamic>))
         .toList();
 
-    // MIUI flow: Share là route root → prefs chưa được dọn ở loading_screen
+    // MIUI flow: Share là route root → dọn garage restore state
     if (!ctx.canPop()) {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.remove('pending_garage_theme_id');
-      await prefs.remove('pending_garage_stickers');
+      await pendingRestoreService.clearGarageApply();
     }
 
     if (!mounted) return;
@@ -78,7 +77,10 @@ class _ShareScreenState extends ConsumerState<ShareScreen> {
           await src.copy(dest.path);
           persistedPath = dest.path;
         }
-      } catch (_) {}
+      } catch (e) {
+        debugPrint('[ShareScreen] Failed to persist wallpaper to documents: $e');
+        // persistedPath còn trỏ vào cache dir — OS có thể dọn bất cứ lúc nào
+      }
     }
 
     // Đảm bảo Hive box đã mở (provider build() là async)
@@ -165,8 +167,7 @@ class _ShareScreenState extends ConsumerState<ShareScreen> {
                   GestureDetector(
                     onTap: () {
                       Clipboard.setData(const ClipboardData(
-                          text:
-                              'https://play.google.com/store/apps/details?id=com.studio.diy_wallpaper'));
+                          text: AppConstants.playStoreUrl));
                       CyberToast.show(context, ref.read(stringsProvider).linkCopied);
                     },
                     child: Container(
@@ -207,7 +208,7 @@ class _ShareScreenState extends ConsumerState<ShareScreen> {
 
     await SharePlus.instance.share(
       ShareParams(
-        text: 'Check out my wallpaper from DIY Wallpaper! https://play.google.com/store/apps/details?id=com.studio.diy_wallpaper',
+        text: 'Check out my wallpaper from DIY Wallpaper! ${AppConstants.playStoreUrl}',
         subject: 'DIY Wallpaper',
       ),
     );

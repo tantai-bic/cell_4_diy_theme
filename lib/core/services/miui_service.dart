@@ -1,8 +1,9 @@
 import 'dart:io';
 import 'package:flutter/services.dart';
+import '../constants/app_constants.dart';
 
 class MiuiService {
-  static const _channel = MethodChannel('com.studio.diy_wallpaper/wallpaper');
+  static const _channel = MethodChannel(AppConstants.wallpaperChannelName);
 
   static Future<bool> isMiui() async {
     if (!Platform.isAndroid) return false;
