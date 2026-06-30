@@ -9,10 +9,14 @@
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
         android:maxSdkVersion="32" />
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <!-- Foreground service shield — giữ app sống khi MIUI cố kill trong lúc set wallpaper -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <application
         android:label="DIY Wallpaper"
-        android:name="${applicationName}"
+        android:name=".DiyWallpaperApp"
         android:icon="@mipmap/ic_launcher"
         android:allowBackup="false"
         android:fullBackupContent="false">
@@ -38,6 +42,12 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- Foreground service để bảo vệ quá trình set wallpaper khỏi bị MIUI kill -->
+        <service
+            android:name=".WallpaperForegroundService"
+            android:foregroundServiceType="dataSync"
+            android:exported="false" />
 
         <meta-data
             android:name="flutterEmbedding"

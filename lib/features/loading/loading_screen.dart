@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../core/l10n/locale_provider.dart';
 import '../../core/models/app_data.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/widgets/loading_modal.dart';
@@ -227,9 +228,9 @@ class _LoadingScreenState extends ConsumerState<LoadingScreen>
                   },
                 ),
                 const SizedBox(height: 8),
-                const Text(
-                  'TRẠM ĐỘ GIAO DIỆN',
-                  style: TextStyle(
+                Text(
+                  ref.watch(stringsProvider).splashSubtitle,
+                  style: const TextStyle(
                     color: AppColors.textMuted,
                     fontFamily: 'Rajdhani',
                     fontSize: 13,
@@ -255,9 +256,9 @@ class _LoadingScreenState extends ConsumerState<LoadingScreen>
                   ),
                 ),
                 const SizedBox(height: 8),
-                const Text(
-                  'INITIALIZING SYSTEM...',
-                  style: TextStyle(
+                Text(
+                  ref.watch(stringsProvider).splashInitializing,
+                  style: const TextStyle(
                     color: AppColors.textMuted,
                     fontFamily: 'Orbitron',
                     fontSize: 9,

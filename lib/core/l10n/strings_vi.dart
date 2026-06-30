@@ -18,9 +18,9 @@ class ViStrings extends AppStrings {
   @override String get addedToFavorites => 'ĐÃ THÊM VÀO YÊU THÍCH';
   @override String get removedFromFavorites => 'ĐÃ XÓA KHỎI YÊU THÍCH';
 
-  @override String get enterGarage => 'VÀO GARAGE';
+  @override String get enterGarage => 'VÀO CHỈNH SỬA';
   @override String get applyLabel => 'ÁP DỤNG';
-  @override String get lockedGarage => '🔒 GARAGE';
+  @override String get lockedGarage => '🔒 CHỈNH SỬA';
   @override String get lockedApply => '🔒 ÁP DỤNG';
 
   @override String get applyButton => 'APPLY';
@@ -92,14 +92,28 @@ class ViStrings extends AppStrings {
   @override String get copyLink => 'SAO CHÉP LIÊN KẾT';
   @override String get linkCopied => 'ĐÃ SAO CHÉP!';
 
+  @override String get miuiGuideTitle => 'TỐI ƯU CHO MIUI';
+  @override String get miuiGuideSubtitle => 'Cấp "kim bài miễn tử" để MIUI không bao giờ tắt app khi đang đặt wallpaper.';
+  @override String get miuiGuideStep1Title => 'BƯỚC 1 — TỰ KHỞI CHẠY';
+  @override String get miuiGuideStep1Body => 'Bật Tự khởi chạy (Autostart) cho DIY Wallpaper để hệ thống giữ app luôn hoạt động.';
+  @override String get miuiGuideStep2Title => 'BƯỚC 2 — PIN';
+  @override String get miuiGuideStep2Body => 'Tắt giới hạn pin (No restrictions) để MIUI không ép tắt app.';
+  @override String get miuiGuideOpenAutostart => 'MỞ CÀI ĐẶT TỰ KHỞI CHẠY';
+  @override String get miuiGuideOpenBattery => 'MỞ CÀI ĐẶT PIN';
+  @override String get miuiGuideDone => 'ĐÃ HIỂU';
+
+  @override String get splashSubtitle => 'WALLPAPER STUDIO';
+  @override String get splashInitializing => 'ĐANG KHỞI ĐỘNG...';
+
   @override String get libraryTitle => 'THƯ VIỆN';
   @override String get wallpaperTab => 'WALLPAPER';
   @override String get draftTab => 'NHÁP';
   @override String get deleted => 'ĐÃ XÓA';
   @override String get savedToGallery => 'ĐÃ LƯU VÀO THƯ VIỆN';
   @override String get saveFailed => 'LƯU THẤT BẠI';
+  @override String get galleryPermissionDenied => 'CHƯA CÓ QUYỀN TRUY CẬP THƯ VIỆN. MỞ CÀI ĐẶT ĐỂ CẤP PHÉP.';
   @override String get continueMod => 'TIẾP TỤC CHỈNH SỬA';
   @override String get applyFree => 'ÁP DỤNG';
-  @override String get editInGarage => 'CHỈNH SỬA TRONG GARAGE';
+  @override String get editInGarage => 'CHỈNH SỬA';
   @override String get saveToDevice => 'LƯU VÀO THIẾT BỊ';
 }

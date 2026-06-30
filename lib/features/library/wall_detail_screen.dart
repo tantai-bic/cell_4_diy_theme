@@ -106,6 +106,17 @@ class WallDetailScreen extends ConsumerWidget {
   }
 
   Future<void> _saveToDevice(BuildContext context, LibraryWallpaper wall, s) async {
+    // Kiểm tra quyền truy cập gallery
+    final hasAccess = await Gal.hasAccess();
+    if (!hasAccess) {
+      final granted = await Gal.requestAccess();
+      if (!granted) {
+        if (context.mounted) CyberToast.show(context, s.galleryPermissionDenied);
+        return;
+      }
+    }
+
+    if (!context.mounted) return;
     LoadingModal.show(context, messageBuilder: (s) => s.saving);
     try {
       if (wall.imagePath.startsWith('/')) {

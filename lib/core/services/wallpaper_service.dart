@@ -62,4 +62,25 @@ class WallpaperService {
       debugPrint('[WallpaperService] openWallpaperPicker error: $e');
     }
   }
+
+  /// Bật foreground service — treo notification cố định để MIUI không kill app
+  /// khi system wallpaper picker activity mở ra (app chuyển sang background).
+  static Future<void> startShield() async {
+    if (!Platform.isAndroid) return;
+    try {
+      await _pickerChannel.invokeMethod('startWallpaperShield');
+    } catch (e) {
+      debugPrint('[WallpaperService] startShield error: $e');
+    }
+  }
+
+  /// Tắt foreground service sau khi wallpaper đã set xong.
+  static Future<void> stopShield() async {
+    if (!Platform.isAndroid) return;
+    try {
+      await _pickerChannel.invokeMethod('stopWallpaperShield');
+    } catch (e) {
+      debugPrint('[WallpaperService] stopShield error: $e');
+    }
+  }
 }

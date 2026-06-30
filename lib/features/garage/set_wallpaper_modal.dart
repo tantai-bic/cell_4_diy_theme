@@ -25,9 +25,15 @@ class SetWallpaperModal extends ConsumerWidget {
 
     if (target == null) return;
 
+    // Bật foreground service trước — MIUI sẽ không kill app khi system picker mở
+    await WallpaperService.startShield();
+
     LoadingModal.show(ctx, messageBuilder: (s) => s.systemApplying);
     final ok = await WallpaperService.setWallpaper(imagePath, target);
     LoadingModal.hide();
+
+    // Tắt shield sau khi set xong
+    await WallpaperService.stopShield();
 
     if (ok) {
       HapticFeedback.heavyImpact();
@@ -53,9 +59,15 @@ class SetWallpaperModal extends ConsumerWidget {
 
     if (target == null) return;
 
+    // Bật foreground service trước — MIUI sẽ không kill app khi system picker mở
+    await WallpaperService.startShield();
+
     LoadingModal.show(ctx, messageBuilder: (s) => s.systemApplying);
     final ok = await WallpaperService.setWallpaper(imagePath, target);
     LoadingModal.hide();
+
+    // Tắt shield sau khi set xong
+    await WallpaperService.stopShield();
 
     if (ok) {
       HapticFeedback.heavyImpact();
