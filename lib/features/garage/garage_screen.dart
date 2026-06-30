@@ -18,8 +18,8 @@ import '../../core/theme/widgets/loading_modal.dart';
 import '../../providers/entitlement_provider.dart';
 import '../../providers/library_provider.dart';
 import '../../core/models/theme_item.dart' show LibraryDraft;
-import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/constants/analytics_events.dart';
+import '../../core/services/pending_restore_service.dart';
 import '../../core/services/ad_service.dart';
 import '../../core/l10n/locale_provider.dart';
 import '../../core/services/analytics_service.dart';
@@ -83,7 +83,7 @@ class _GarageScreenState extends ConsumerState<GarageScreen> {
       if (byteData == null) return null;
       final bytes = byteData.buffer.asUint8List();
       final file = File(
-          '${(await getTemporaryDirectory()).path}/wp_canvas_${DateTime.now().millisecondsSinceEpoch}.png');
+          '${(await getTemporaryDirectory()).path}/wp_canvas_preview.png');
       await file.writeAsBytes(bytes);
       return file.path;
     } catch (e) {
@@ -220,16 +220,19 @@ class _GarageScreenState extends ConsumerState<GarageScreen> {
     // Capture + prefs + set đều trong loading phase
     LoadingModal.show(context, messageBuilder: (s) => s.systemApplying);
 
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt('pending_garage_theme_id', widget.themeId);
-    await prefs.setStringList('pending_garage_stickers',
-        _stickers.map((s) => jsonEncode(s.toJson())).toList());
-
+    final stickersJson = _stickers.map((s) => jsonEncode(s.toJson())).toList();
     final capturedPath = await _captureCanvas();
     final imagePath = capturedPath ?? theme.img;
-    await prefs.setString('pending_share_image', imagePath);
 
+    await pendingRestoreService.saveGarageApply(
+      themeId: widget.themeId,
+      stickersJson: stickersJson,
+      imagePath: imagePath,
+    );
+
+    await WallpaperService.startShield();
     final ok = await WallpaperService.setWallpaper(imagePath, target);
+    await WallpaperService.stopShield();
 
     if (!mounted) return;
 
@@ -237,7 +240,6 @@ class _GarageScreenState extends ConsumerState<GarageScreen> {
       HapticFeedback.heavyImpact();
       CyberToast.show(context, ref.read(stringsProvider).wallpaperSet, haptic: false);
       final editDurationSec = DateTime.now().difference(_editStartTime).inSeconds;
-      final stickerLayersJson = _stickers.map((s) => jsonEncode(s.toJson())).toList();
       analyticsService.logWallpaperExported(
         themeId: widget.themeId.toString(),
         stickerCount: _stickers.length,
@@ -261,24 +263,19 @@ class _GarageScreenState extends ConsumerState<GarageScreen> {
       // Buffer 1s cho MIUI kill window — modal vẫn hiển thị trong suốt thời gian này
       await Future.delayed(const Duration(seconds: 1));
       if (!mounted) return;
-      // Xóa prefs ngay trước khi navigate — không còn risk double-restore
-      await prefs.remove('pending_share_image');
-      await prefs.remove('pending_garage_theme_id');
-      await prefs.remove('pending_garage_stickers');
+      await pendingRestoreService.clearGarageApply();
       LoadingModal.hide();
       context.pushNamed('share', extra: ShareArgs(
         imagePath: imagePath,
         backContext: WallpaperSetContext.garage,
         themeTitle: theme.title,
-        stickerLayersJson: stickerLayersJson,
+        stickerLayersJson: stickersJson,
         themeId: widget.themeId,
       ));
     } else {
       LoadingModal.hide();
       CyberToast.show(context, ref.read(stringsProvider).wallpaperSetFailed, variant: ToastVariant.pink);
-      await prefs.remove('pending_share_image');
-      await prefs.remove('pending_garage_theme_id');
-      await prefs.remove('pending_garage_stickers');
+      await pendingRestoreService.clearGarageApply();
     }
   }
 
@@ -369,6 +366,7 @@ class _GarageScreenState extends ConsumerState<GarageScreen> {
                         await RewardModal.show(
                           context,
                           rewardContext: RewardContext.unlockItem,
+                          isFirstUnlock: !(entitlement?.isStickerUnlocked(id) ?? false),
                           onRewarded: () async {
                             await ref.read(entitlementProvider.notifier).unlockSticker(id);
                             _addSticker(StickerLayer(src: src));

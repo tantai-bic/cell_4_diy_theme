@@ -12,6 +12,7 @@ import '../../core/theme/widgets/loading_modal.dart';
 class SetWallpaperModal extends ConsumerWidget {
   const SetWallpaperModal({super.key});
 
+  @Deprecated('Use showLocalized() — onSuccess receives WallpaperTarget for accurate analytics')
   static Future<void> show(
     BuildContext ctx, {
     required String imagePath,
@@ -49,7 +50,7 @@ class SetWallpaperModal extends ConsumerWidget {
     BuildContext ctx,
     AppStrings s, {
     required String imagePath,
-    VoidCallback? onSuccess,
+    void Function(WallpaperTarget target)? onSuccess,
   }) async {
     final target = await showDialog<WallpaperTarget>(
       context: ctx,
@@ -72,7 +73,7 @@ class SetWallpaperModal extends ConsumerWidget {
     if (ok) {
       HapticFeedback.heavyImpact();
       CyberToast.show(ctx, s.wallpaperSet, haptic: false);
-      onSuccess?.call();
+      onSuccess?.call(target);
     } else {
       CyberToast.show(ctx, s.wallpaperSetFailed, variant: ToastVariant.pink);
     }

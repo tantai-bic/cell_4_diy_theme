@@ -6,10 +6,14 @@ import '../core/models/theme_item.dart';
 const String _kFavThemes = 'LS_FAV_THEMES';
 
 class ThemeStateNotifier extends Notifier<List<ThemeItem>> {
+  bool _initialized = false;
+
   @override
   List<ThemeItem> build() {
-    // Build sync state trước, rồi load favorites async
-    Future.microtask(_loadFavorites);
+    if (!_initialized) {
+      _initialized = true;
+      Future.microtask(_loadFavorites);
+    }
     return kThemes.map((t) => ThemeItem(
       id: t.id,
       title: t.title,
@@ -22,10 +26,13 @@ class ThemeStateNotifier extends Notifier<List<ThemeItem>> {
   Future<void> _loadFavorites() async {
     final prefs = await SharedPreferences.getInstance();
     final favIds = (prefs.getStringList(_kFavThemes) ?? []).map(int.parse).toSet();
-    if (favIds.isEmpty) return;
+    // Merge với current state để bảo toàn bất kỳ toggle nào xảy ra trong khi đọc prefs
+    final currentFavIds = state.where((t) => t.isFavorite).map((t) => t.id).toSet();
+    final mergedFavIds = {...favIds, ...currentFavIds};
+    if (mergedFavIds.isEmpty) return;
     state = [
       for (final t in state)
-        if (favIds.contains(t.id))
+        if (mergedFavIds.contains(t.id))
           ThemeItem(id: t.id, title: t.title, category: t.category, img: t.img, isPremium: t.isPremium, isFavorite: true)
         else
           t,

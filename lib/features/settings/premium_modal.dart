@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
 import '../../core/constants/analytics_events.dart';
+import '../../core/constants/app_constants.dart';
 import '../../core/l10n/locale_provider.dart';
 import '../../core/services/analytics_service.dart';
 import '../../core/services/iap_service.dart';
@@ -56,7 +57,7 @@ class _PremiumModalState extends ConsumerState<PremiumModal> {
     await ref.read(entitlementProvider.notifier).setPremium();
     if (!mounted) return;
     analyticsService.logPurchase(
-      productId: kPremiumProductId,
+      productId: AppConstants.iapPremiumId,
       price: 29000,
       currency: 'VND',
       transactionId: details.purchaseID ?? 'unknown',
@@ -71,7 +72,7 @@ class _PremiumModalState extends ConsumerState<PremiumModal> {
     if (!mounted) return;
     if (reason != 'canceled') {
       analyticsService.logIapFailed(
-        productId: kPremiumProductId,
+        productId: AppConstants.iapPremiumId,
         errorCode: reason,
         errorMessage: reason,
       );
@@ -85,7 +86,7 @@ class _PremiumModalState extends ConsumerState<PremiumModal> {
 
   Future<void> _purchase() async {
     analyticsService.logIapProductSelected(
-      productId: kPremiumProductId,
+      productId: AppConstants.iapPremiumId,
       price: 29000,
       currency: 'VND',
       productType: 'one_time',
@@ -117,7 +118,7 @@ class _PremiumModalState extends ConsumerState<PremiumModal> {
     final isPremium = ref.read(entitlementProvider).valueOrNull?.isPremium ?? false;
     if (!isPremium) {
       analyticsService.logIapFailed(
-        productId: kPremiumProductId,
+        productId: AppConstants.iapPremiumId,
         errorCode: 'not_found',
         errorMessage: 'No previous purchase found',
       );

@@ -3,8 +3,9 @@ import 'package:async_wallpaper/async_wallpaper.dart' as aw;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
+import '../constants/app_constants.dart';
 
-const MethodChannel _pickerChannel = MethodChannel('com.studio.diy_wallpaper/wallpaper');
+const MethodChannel _pickerChannel = MethodChannel(AppConstants.wallpaperChannelName);
 
 enum WallpaperTarget { home, lock, both }
 

@@ -14,9 +14,9 @@ import '../../providers/theme_state_provider.dart';
 import '../../core/constants/analytics_events.dart';
 import '../../core/l10n/locale_provider.dart';
 import '../../core/services/analytics_service.dart';
+import '../../core/services/pending_restore_service.dart';
 import '../../core/theme/widgets/banner_ad_widget.dart';
 import '../../core/services/network_guard.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../garage/reward_modal.dart';
 import '../garage/set_wallpaper_modal.dart';
 import '../../core/theme/widgets/loading_modal.dart';
@@ -173,28 +173,28 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
     if (!mounted) return;
 
     final theme = _current;
-    final prefs = await SharedPreferences.getInstance();
 
     Future<void> _doApply() async {
-      // Ghi flag TRƯỚC khi gọi modal — nếu MIUI kill trong setWallpaper(),
-      // LoadingScreen đọc flag này để restore về Gallery đúng vị trí theme.
-      await prefs.setInt('pending_gallery_theme_id', theme.id);
+      await pendingRestoreService.saveGalleryApply(themeId: theme.id);
 
       bool _applied = false;
       await SetWallpaperModal.showLocalized(context, ref.read(stringsProvider),
           imagePath: theme.img,
-          onSuccess: () {
+          onSuccess: (target) {
             _applied = true;
-            prefs.remove('pending_gallery_theme_id');
+            pendingRestoreService.clearGalleryApply();
             analyticsService.logWallpaperSetAs(
               themeId: theme.id.toString(),
-              target: AnalyticsValue.homeScreen,
+              target: switch (target) {
+                WallpaperTarget.home => AnalyticsValue.homeScreen,
+                WallpaperTarget.lock => AnalyticsValue.lockScreen,
+                WallpaperTarget.both => AnalyticsValue.both,
+              },
             );
           });
 
-      // User cancel hoặc set thất bại → xóa flag
       if (!_applied) {
-        await prefs.remove('pending_gallery_theme_id');
+        await pendingRestoreService.clearGalleryApply();
       }
     }
 
@@ -204,6 +204,7 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
         rewardContext: RewardContext.unlockTheme,
         itemId: theme.id.toString(),
         itemName: theme.title,
+        isFirstUnlock: !entitlement.isThemeUnlocked(theme.id),
         onRewarded: () async {
           await ref.read(entitlementProvider.notifier).unlockTheme(theme.id);
           if (mounted) await _doApply();
@@ -241,7 +242,18 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final themes = ref.watch(themeStateProvider);
+    // BUG-006: cập nhật isFavorite trong _themes khi provider thay đổi (favorites toggled)
+    // mà không thay đổi thứ tự/độ dài list → không gây page jump trong PageView
+    ref.listen<List<ThemeItem>>(themeStateProvider, (_, next) {
+      if (!mounted) return;
+      setState(() {
+        _themes = _themes
+            .map((t) => next.firstWhere((n) => n.id == t.id, orElse: () => t))
+            .toList();
+        _feed = _buildFeed(_themes);
+      });
+    });
+
     final entitlementState = ref.watch(entitlementProvider).valueOrNull;
     final theme = _current;
 

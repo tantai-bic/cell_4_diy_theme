@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/l10n/locale_provider.dart';
+import '../../core/services/pending_restore_service.dart';
 import '../../core/models/app_data.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/widgets/loading_modal.dart';
@@ -47,16 +48,23 @@ class _LoadingScreenState extends ConsumerState<LoadingScreen>
   }
 
   Future<void> _init() async {
-    final prefs = await SharedPreferences.getInstance();
-
     // Native splash đã serve xong vai trò cold-start → remove để Flutter render
     FlutterNativeSplash.remove();
 
+    try {
+      await _initWithRestore();
+    } catch (e) {
+      debugPrint('[LoadingScreen] Restore check failed: $e — falling through to normal flow');
+      if (mounted) await _normalLaunch();
+    }
+  }
+
+  Future<void> _initWithRestore() async {
     // PRIORITY 1: MIUI restart sau khi set wallpaper từ garage
     // → không show splash, hiện modal "SYSTEM APPLYING..." rồi vào Share
-    final pendingShareImage = prefs.getString('pending_share_image');
-    if (pendingShareImage != null && pendingShareImage.isNotEmpty) {
-      await prefs.remove('pending_share_image');
+    final garageRestore = await pendingRestoreService.loadGarageApply();
+    if (garageRestore != null) {
+      await pendingRestoreService.clearGarageApply();
       if (!mounted) return;
 
       setState(() => _state = _LoadState.modalLoading);
@@ -69,17 +77,15 @@ class _LoadingScreenState extends ConsumerState<LoadingScreen>
 
       LoadingModal.hide();
       if (mounted) {
-        final themeId = prefs.getInt('pending_garage_theme_id');
-        final stickersJson = prefs.getStringList('pending_garage_stickers') ?? [];
-        final themeTitle = themeId != null
-            ? kThemes.firstWhere((t) => t.id == themeId, orElse: () => kThemes.first).title
+        final themeTitle = garageRestore.themeId != null
+            ? kThemes.firstWhere((t) => t.id == garageRestore.themeId!, orElse: () => kThemes.first).title
             : '';
         context.goNamed('share', extra: ShareArgs(
-          imagePath: pendingShareImage,
+          imagePath: garageRestore.imagePath,
           backContext: WallpaperSetContext.garage,
           themeTitle: themeTitle,
-          stickerLayersJson: stickersJson,
-          themeId: themeId ?? 1,
+          stickerLayersJson: garageRestore.stickersJson,
+          themeId: garageRestore.themeId ?? 1,
         ));
       }
       return;
@@ -87,9 +93,9 @@ class _LoadingScreenState extends ConsumerState<LoadingScreen>
 
     // PRIORITY 2: MIUI restart sau khi set wallpaper từ gallery
     // → modal "SYSTEM APPLYING..." → restore Gallery đúng vị trí theme
-    final pendingGalleryThemeId = prefs.getInt('pending_gallery_theme_id');
+    final pendingGalleryThemeId = await pendingRestoreService.loadGalleryThemeId();
     if (pendingGalleryThemeId != null) {
-      await prefs.remove('pending_gallery_theme_id');
+      await pendingRestoreService.clearGalleryApply();
       if (!mounted) return;
 
       setState(() => _state = _LoadState.modalLoading);
@@ -109,10 +115,15 @@ class _LoadingScreenState extends ConsumerState<LoadingScreen>
     }
 
     // PRIORITY 3: Mọi trường hợp còn lại → show splash rồi về home
+    if (mounted) await _normalLaunch();
+  }
+
+  Future<void> _normalLaunch() async {
     _glitchCtrl.repeat(reverse: true);
     _scanCtrl.repeat();
     if (mounted) setState(() => _state = _LoadState.fullSplash);
 
+    final prefs = await SharedPreferences.getInstance();
     final launchedBefore = prefs.getBool('app_launched_before') ?? false;
     if (!launchedBefore) {
       // First launch: 3-second splash + network check
